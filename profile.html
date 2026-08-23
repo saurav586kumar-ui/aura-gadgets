@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile & Orders | AuraGadget</title>
+    <title>My Profile, Wallet & Orders | AuraGadget</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -16,6 +16,10 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 10px 30px rgba(99, 102, 241, 0.08);
+        }
+        .red-dot {
+            width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; display: inline-block; position: absolute; top: 10px; right: 12px;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); animation: pulse 2s infinite;
         }
     </style>
 </head>
@@ -40,8 +44,10 @@
         <div class="lg:col-span-1 space-y-3">
             <div class="unshaped-card p-4 space-y-2">
                 <button onclick="switchTab('profile')" id="btn-profile" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md">👤 Personal Profile</button>
+                <button onclick="switchTab('wallet')" id="btn-wallet" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative">💰 Gift Card & Wallet</button>
                 <button onclick="switchTab('addresses')" id="btn-addresses" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">📍 My Addresses</button>
-                <button onclick="switchTab('orders')" id="btn-orders" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">📦 My Orders & Returns</button>
+                <button onclick="switchTab('orders')" id="btn-orders" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative">📦 My Orders & Returns <span id="orders-red-dot" class="hidden"></span></button>
+                <button onclick="switchTab('notifications')" id="btn-notifications" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative">🔔 Notification History</button>
                 <button onclick="switchTab('about')" id="btn-about" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">ℹ️ About Us</button>
                 <button onclick="switchTab('contact')" id="btn-contact" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">✉️ Contact Us</button>
             </div>
@@ -67,7 +73,34 @@
                 </form>
             </div>
 
-            <!-- 2. Addresses Section -->
+            <!-- 2. Wallet & Gift Card Section -->
+            <div id="section-wallet" class="unshaped-card p-6 md:p-8 hidden space-y-6">
+                <div class="flex justify-between items-center p-6 bg-gradient-to-r from-indigo-600 to-pink-600 rounded-3xl text-white shadow-xl">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-100">Store Account Balance</p>
+                        <h3 id="wallet-balance-display" class="text-3xl font-black font-brand mt-1">₹0.00</h3>
+                    </div>
+                    <span class="text-3xl">🎁</span>
+                </div>
+
+                <div class="p-6 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-4">
+                    <h3 class="font-black text-sm text-indigo-900">Redeem Gift Card / Voucher</h3>
+                    <p class="text-xs text-gray-500">Enter your gift card code and secret password provided by admin to add money to your store account.</p>
+                    <form onsubmit="redeemGiftCard(event)" class="space-y-3 max-w-lg">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Gift Card Code</label>
+                            <input type="text" id="gc-code-input" placeholder="e.g. GC-9821-XYZ" required class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white font-mono uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Secret Password</label>
+                            <input type="password" id="gc-pass-input" placeholder="Enter card password" required class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow transition">Redeem Money 💰</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 3. Addresses Section -->
             <div id="section-addresses" class="unshaped-card p-6 md:p-8 hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -95,14 +128,23 @@
                 <div id="addresses-list" class="space-y-4"></div>
             </div>
 
-            <!-- 3. Orders Section -->
+            <!-- 4. Orders Section -->
             <div id="section-orders" class="unshaped-card p-6 md:p-8 hidden">
                 <h2 class="text-2xl font-black font-brand text-gray-900 mb-2">My Orders & History</h2>
                 <p class="text-xs text-gray-500 mb-6">Track live status, chat directly with admin, or check return requests.</p>
                 <div id="orders-container" class="space-y-6"></div>
             </div>
 
-            <!-- 4. About Section -->
+            <!-- 5. Notification History Section -->
+            <div id="section-notifications" class="unshaped-card p-6 md:p-8 hidden space-y-4">
+                <h2 class="text-2xl font-black font-brand text-gray-900">Notification History</h2>
+                <p class="text-xs text-gray-500">All recent updates, admin replies, money additions, and order alerts.</p>
+                <div id="notifications-list" class="space-y-3">
+                    <p class="text-xs text-gray-400">Loading notifications...</p>
+                </div>
+            </div>
+
+            <!-- 6. About Section -->
             <div id="section-about" class="unshaped-card p-6 md:p-8 hidden space-y-4">
                 <h2 class="text-2xl font-black font-brand text-gray-900">About AuraGadget</h2>
                 <p class="text-sm text-gray-600 leading-relaxed">
@@ -110,7 +152,7 @@
                 </p>
             </div>
 
-            <!-- 5. Contact Section -->
+            <!-- 7. Contact Section -->
             <div id="section-contact" class="unshaped-card p-6 md:p-8 hidden space-y-4 text-center">
                 <h2 class="text-2xl font-black font-brand text-gray-900">Get in Touch</h2>
                 <p class="text-xs text-gray-500 max-w-md mx-auto">Have questions about your gadget order or shipping? Reach out to us directly!</p>
@@ -185,7 +227,7 @@
     <!-- Firebase Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, addDoc, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, addDoc, orderBy, onSnapshot, serverTimestamp, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
@@ -208,15 +250,24 @@
             loadUserProfile();
             loadUserAddresses();
             loadUserOrders();
+            loadUserWallet();
+            loadNotificationHistory();
         });
 
         window.switchTab = function(tabName) {
-            ['profile', 'addresses', 'orders', 'about', 'contact'].forEach(t => {
+            ['profile', 'wallet', 'addresses', 'orders', 'notifications', 'about', 'contact'].forEach(t => {
                 document.getElementById(`section-${t}`).classList.add('hidden');
-                document.getElementById(`btn-${t}`).className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition";
+                let btn = document.getElementById(`btn-${t}`);
+                if (btn) btn.className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative";
             });
             document.getElementById(`section-${tabName}`).classList.remove('hidden');
-            document.getElementById(`btn-${tabName}`).className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md";
+            let activeBtn = document.getElementById(`btn-${tabName}`);
+            if (activeBtn) activeBtn.className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md relative";
+            
+            if (tabName === 'orders') {
+                localStorage.setItem('aura_orders_viewed', 'true');
+                document.getElementById('orders-red-dot').innerHTML = '';
+            }
         }
 
         window.saveProfile = function(e) {
@@ -235,6 +286,96 @@
                 document.getElementById('prof-name').value = saved.name || '';
                 document.getElementById('prof-phone').value = saved.phone || '';
             }
+        }
+
+        // Wallet Balance Management
+        function loadUserWallet() {
+            let balance = parseFloat(localStorage.getItem('aura_store_wallet')) || 0.00;
+            document.getElementById('wallet-balance-display').textContent = `₹${balance.toFixed(2)}`;
+        }
+
+        window.redeemGiftCard = async function(e) {
+            e.preventDefault();
+            let code = document.getElementById('gc-code-input').value.trim().toUpperCase();
+            let pass = document.getElementById('gc-pass-input').value.trim();
+
+            try {
+                const docRef = doc(db, "giftcards", code);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    alert('Invalid Gift Card code!');
+                    return;
+                }
+
+                let gcData = docSnap.data();
+                if (gcData.password !== pass) {
+                    alert('Incorrect secret password for this gift card!');
+                    return;
+                }
+
+                if (gcData.status === 'Used') {
+                    alert('This gift card has already been redeemed!');
+                    return;
+                }
+
+                if (gcData.status === 'Expired') {
+                    alert('This gift card is expired!');
+                    return;
+                }
+
+                // Check expiry date if available
+                if (gcData.expiryDate && new Date(gcData.expiryDate) < new Date()) {
+                    await updateDoc(docRef, { status: 'Expired' });
+                    alert('This gift card has expired!');
+                    return;
+                }
+
+                let amount = parseFloat(gcData.amount) || 0;
+
+                // Mark as used
+                await updateDoc(docRef, { status: 'Used', redeemedBy: localStorage.getItem('aura_device_id') || 'Customer' });
+
+                // Add to wallet
+                let currentWallet = parseFloat(localStorage.getItem('aura_store_wallet')) || 0;
+                let newWallet = currentWallet + amount;
+                localStorage.setItem('aura_store_wallet', newWallet);
+                loadUserWallet();
+
+                // Add notification history
+                addNotificationLog(`Successfully redeemed Gift Card ${code} for ₹${amount}. Added to your store balance.`);
+
+                alert(`Success! ₹${amount} added to your wallet. Current balance: ₹${newWallet.toFixed(2)} 🎁`);
+                document.getElementById('gc-code-input').value = '';
+                document.getElementById('gc-pass-input').value = '';
+            } catch (err) {
+                alert('Error redeeming gift card: ' + err.message);
+            }
+        }
+
+        function addNotificationLog(text) {
+            let logs = JSON.parse(localStorage.getItem('aura_notifications')) || [];
+            logs.unshift({ text: text, time: new Date().toLocaleString() });
+            localStorage.setItem('aura_notifications', JSON.stringify(logs));
+            loadNotificationHistory();
+        }
+
+        function loadNotificationHistory() {
+            let logs = JSON.parse(localStorage.getItem('aura_notifications')) || [];
+            let container = document.getElementById('notifications-list');
+            container.innerHTML = '';
+            if (logs.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">No notifications yet.</p>`;
+                return;
+            }
+            logs.forEach(log => {
+                container.innerHTML += `
+                    <div class="p-3 bg-white/70 border border-indigo-100 rounded-xl flex justify-between items-center text-xs">
+                        <span class="text-gray-800 font-medium">${log.text}</span>
+                        <span class="text-[10px] text-gray-400 ml-2">${log.time}</span>
+                    </div>
+                `;
+            });
         }
 
         window.toggleAddressForm = function() {
@@ -287,7 +428,6 @@
             loadUserAddresses();
         }
 
-        // Fetch Orders with fallback mechanism
         async function loadUserOrders() {
             let container = document.getElementById('orders-container');
             container.innerHTML = `<p class="text-xs text-gray-400">Loading your device orders...</p>`;
@@ -325,8 +465,10 @@
                     return;
                 }
 
+                let hasNewUpdate = false;
                 orders.forEach(order => {
                     let orderStatus = order.status || 'Pending';
+                    if (orderStatus !== 'Pending') hasNewUpdate = true;
                     let statusBg = orderStatus === 'Delivered' ? 'bg-green-100 text-green-700' : (orderStatus === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-700');
                     
                     let returnSection = '';
@@ -361,20 +503,23 @@
                             </div>
                             ${returnSection}
                             <div class="flex flex-wrap gap-3 pt-2">
-                                <button onclick="openChat('${order.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow">💬 Chat with Admin</button>
+                                <button onclick="openChat('${order.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow relative">💬 Chat with Admin <span id="chat-dot-${order.id}"></span></button>
                                 <a href="mailto:sumitiitan58@gmail.com?subject=Support regarding Order ${order.id}&body=Hi Admin, I am facing an issue with Order ID: ${order.id}" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition">✉️ Email Admin</a>
                                 ${!order.returnRequested ? `<button onclick="openReturnModal('${order.id}')" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-xl hover:bg-pink-100 transition">🔄 Request Return</button>` : ''}
                             </div>
                         </div>
                     `;
                 });
+
+                if (hasNewUpdate && localStorage.getItem('aura_orders_viewed') !== 'true') {
+                    document.getElementById('orders-red-dot').className = "red-dot";
+                }
             } catch (err) {
                 console.error(err);
                 container.innerHTML = `<p class="text-xs text-red-400">Error loading orders: ${err.message}</p>`;
             }
         }
 
-        // Return Modal Logic
         window.openReturnModal = function(orderId) {
             document.getElementById('return-order-id').value = orderId;
             document.getElementById('return-reason').value = '';
@@ -406,7 +551,6 @@
             }
         }
 
-        // LIVE CHAT LOGIC FOR USER
         window.openChat = function(orderId) {
             activeChatOrderId = orderId;
             document.getElementById('chat-modal-title').textContent = `Admin Support Chat`;
@@ -501,6 +645,7 @@
                 inputField.value = '';
                 clearImageSelection();
                 await addDoc(collection(db, "orders", activeChatOrderId, "messages"), msgData);
+                addNotificationLog(`Sent message to admin for Order #${activeChatOrderId}`);
             } catch (err) {
                 alert('Failed to send message: ' + err.message);
             }

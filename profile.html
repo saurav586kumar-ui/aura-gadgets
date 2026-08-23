@@ -98,7 +98,7 @@
             <!-- 3. Orders Section -->
             <div id="section-orders" class="unshaped-card p-6 md:p-8 hidden">
                 <h2 class="text-2xl font-black font-brand text-gray-900 mb-2">My Orders & History</h2>
-                <p class="text-xs text-gray-500 mb-6">Track status, chat for support, or raise return requests.</p>
+                <p class="text-xs text-gray-500 mb-6">Track live status, chat directly with admin, or check return requests.</p>
                 <div id="orders-container" class="space-y-6"></div>
             </div>
 
@@ -114,7 +114,7 @@
             <div id="section-contact" class="unshaped-card p-6 md:p-8 hidden space-y-4 text-center">
                 <h2 class="text-2xl font-black font-brand text-gray-900">Get in Touch</h2>
                 <p class="text-xs text-gray-500 max-w-md mx-auto">Have questions about your gadget order or shipping? Reach out to us directly!</p>
-                <div class="py-6">
+                <div class="py-6 space-y-3">
                     <a href="mailto:sumitiitan58@gmail.com" class="inline-block px-8 py-4 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-black text-xs uppercase tracking-widest rounded-full shadow-lg shadow-indigo-200 hover:scale-105 transition">
                         ✉️ Email Us at sumitiitan58@gmail.com
                     </a>
@@ -138,10 +138,54 @@
         </div>
     </div>
 
+    <!-- LIVE CHAT MODAL -->
+    <div id="chat-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-indigo-100 w-full max-w-lg rounded-3xl shadow-2xl flex flex-col h-[550px] overflow-hidden">
+            <!-- Chat Header -->
+            <div class="p-4 bg-gradient-to-r from-indigo-600 to-pink-600 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="chat-modal-title" class="font-black text-sm">Admin Support Chat</h3>
+                    <p id="chat-modal-subtitle" class="text-[10px] text-indigo-100">Direct 1-to-1 Conversation</p>
+                </div>
+                <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 text-white font-bold flex items-center justify-center text-xs transition">✕</button>
+            </div>
+
+            <!-- Messages Box -->
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs">
+                <div class="text-center text-gray-400 text-[11px] py-10">Loading messages...</div>
+            </div>
+
+            <!-- Image Preview Area -->
+            <div id="image-preview-box" class="hidden px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex items-center justify-between">
+                <span id="preview-file-name" class="text-[11px] text-indigo-700 font-bold truncate max-w-[200px]">Image selected</span>
+                <button onclick="clearImageSelection()" class="text-red-500 font-bold text-xs">Remove ✕</button>
+            </div>
+
+            <!-- Chat Input Footer -->
+            <div class="p-3 bg-white border-t border-gray-100 flex items-center gap-2">
+                <label class="cursor-pointer p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition flex items-center justify-center" title="Attach Image">
+                    📷
+                    <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleImageSelection(event)">
+                </label>
+                <input 
+                    type="text" 
+                    id="chat-input-msg" 
+                    placeholder="Type your difficulty/message..." 
+                    onkeypress="if(event.key === 'Enter') sendChatMessage()"
+                    class="flex-1 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500"
+                >
+                <button onclick="sendChatMessage()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition">Send</button>
+            </div>
+            <div class="px-4 py-2 bg-gray-50 text-[10px] text-center text-gray-500 border-t">
+                Prefer email? You can also write directly to <a href="mailto:sumitiitan58@gmail.com" class="text-indigo-600 font-bold underline">sumitiitan58@gmail.com</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, getDocsFromCache } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, addDoc, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
@@ -155,6 +199,10 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        let activeChatOrderId = null;
+        let activeChatUnsubscribe = null;
+        let selectedImageBase64 = null;
 
         document.addEventListener("DOMContentLoaded", function() {
             loadUserProfile();
@@ -239,7 +287,7 @@
             loadUserAddresses();
         }
 
-        // Robust Fetch Orders with fallback mechanism
+        // Fetch Orders with fallback mechanism
         async function loadUserOrders() {
             let container = document.getElementById('orders-container');
             container.innerHTML = `<p class="text-xs text-gray-400">Loading your device orders...</p>`;
@@ -256,16 +304,14 @@
                             orders.push({ id: docSnap.id, ...docSnap.data() });
                         });
                     } catch (indexErr) {
-                        console.warn("Index warning or query failed, fetching all orders as fallback:", indexErr);
+                        console.warn("Query fallback triggered:", indexErr);
                     }
                 }
 
-                // Fallback: If no orders found via deviceId filter, pull all orders and match locally
                 if (orders.length === 0) {
                     const allSnapshot = await getDocs(collection(db, "orders"));
                     allSnapshot.forEach((docSnap) => {
                         let data = docSnap.data();
-                        // Match either deviceId or user's phone number from profile if available
                         let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
                         if ((deviceId && data.deviceId === deviceId) || (userProf.phone && data.customerPhone === userProf.phone)) {
                             orders.push({ id: docSnap.id, ...data });
@@ -280,15 +326,31 @@
                 }
 
                 orders.forEach(order => {
+                    let orderStatus = order.status || 'Pending';
+                    let statusBg = orderStatus === 'Delivered' ? 'bg-green-100 text-green-700' : (orderStatus === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-700');
+                    
+                    let returnSection = '';
+                    if (order.returnRequested) {
+                        let rStatus = order.returnStatus || 'Pending';
+                        returnSection = `
+                            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold text-amber-900">Return Request Raised:</span> <span class="text-gray-600">${order.returnReason}</span>
+                                </div>
+                                <span class="px-2.5 py-1 bg-amber-200 text-amber-900 font-extrabold rounded-lg uppercase text-[10px]">Status: ${rStatus}</span>
+                            </div>
+                        `;
+                    }
+
                     container.innerHTML += `
                         <div class="p-5 rounded-2xl border border-indigo-100 bg-white/70 space-y-3">
                             <div class="flex justify-between items-center border-b border-indigo-50 pb-3">
                                 <div>
-                                    <span class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full uppercase">Order ID: ${order.id.slice(0,8)}</span>
+                                    <span class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full uppercase">Order ID: ${order.id}</span>
                                     <p class="text-[11px] text-gray-400 mt-1">Customer: ${order.customerName || 'N/A'} (${order.customerPhone || 'N/A'})</p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="px-3 py-1 bg-pink-100 text-pink-700 font-black text-xs rounded-full uppercase">${order.status || 'Dispatched'}</span>
+                                    <span class="px-3 py-1 ${statusBg} font-black text-xs rounded-full uppercase">${orderStatus}</span>
                                     <p class="text-xs font-bold text-gray-900 mt-1">Total: ${order.total || 'N/A'}</p>
                                 </div>
                             </div>
@@ -297,9 +359,11 @@
                                 <p>${order.itemsSummary || 'Gadget Order'}</p>
                                 <p class="text-[11px] text-gray-500 mt-1">📍 Address: ${order.shippingAddress || 'N/A'}</p>
                             </div>
+                            ${returnSection}
                             <div class="flex flex-wrap gap-3 pt-2">
-                                <a href="mailto:sumitiitan58@gmail.com?subject=Support regarding Order ${order.id}" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition">💬 Chat with Support</a>
-                                <button onclick="openReturnModal('${order.id}')" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-xl hover:bg-pink-100 transition">🔄 Request Return</button>
+                                <button onclick="openChat('${order.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow">💬 Chat with Admin</button>
+                                <a href="mailto:sumitiitan58@gmail.com?subject=Support regarding Order ${order.id}&body=Hi Admin, I am facing an issue with Order ID: ${order.id}" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition">✉️ Email Admin</a>
+                                ${!order.returnRequested ? `<button onclick="openReturnModal('${order.id}')" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-xl hover:bg-pink-100 transition">🔄 Request Return</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -310,6 +374,7 @@
             }
         }
 
+        // Return Modal Logic
         window.openReturnModal = function(orderId) {
             document.getElementById('return-order-id').value = orderId;
             document.getElementById('return-reason').value = '';
@@ -338,6 +403,106 @@
                 loadUserOrders();
             } catch (err) {
                 alert('Error: ' + err.message);
+            }
+        }
+
+        // LIVE CHAT LOGIC FOR USER
+        window.openChat = function(orderId) {
+            activeChatOrderId = orderId;
+            document.getElementById('chat-modal-title').textContent = `Admin Support Chat`;
+            document.getElementById('chat-modal-subtitle').textContent = `Order ID: ${orderId}`;
+            document.getElementById('chat-modal').classList.remove('hidden');
+            loadChatMessages(orderId);
+        }
+
+        window.closeChatModal = function() {
+            document.getElementById('chat-modal').classList.add('hidden');
+            if (activeChatUnsubscribe) {
+                activeChatUnsubscribe();
+                activeChatUnsubscribe = null;
+            }
+            activeChatOrderId = null;
+            clearImageSelection();
+        }
+
+        function loadChatMessages(orderId) {
+            let container = document.getElementById('chat-messages-container');
+            container.innerHTML = `<div class="text-center text-gray-400 py-4">Connecting to secure chat...</div>`;
+
+            const msgsRef = collection(db, "orders", orderId, "messages");
+            const q = query(msgsRef, orderBy("timestamp", "asc"));
+
+            if (activeChatUnsubscribe) activeChatUnsubscribe();
+
+            activeChatUnsubscribe = onSnapshot(q, (snapshot) => {
+                container.innerHTML = '';
+                if (snapshot.empty) {
+                    container.innerHTML = `<p class="text-center text-gray-400 text-[11px] py-10">No messages yet. Send your difficulty/message to admin!</p>`;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    let msg = docSnap.data();
+                    let isUser = msg.sender !== 'admin';
+                    let bubbleAlign = isUser ? 'ml-auto bg-indigo-600 text-white' : 'mr-auto bg-white text-slate-800 border border-slate-200';
+                    let imageHtml = msg.imageUrl ? `<img src="${msg.imageUrl}" class="w-40 h-40 object-cover rounded-lg mt-2 cursor-pointer" onclick="window.open('${msg.imageUrl}')">` : '';
+
+                    container.innerHTML += `
+                        <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[80%] ${isUser ? 'ml-auto' : 'mr-auto'}">
+                            <span class="text-[9px] text-gray-400 mb-0.5">${isUser ? 'You' : 'Admin'}</span>
+                            <div class="p-3 rounded-2xl text-xs shadow-sm ${bubbleAlign}">
+                                ${msg.text ? `<p class="leading-relaxed">${msg.text}</p>` : ''}
+                                ${imageHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        window.handleImageSelection = function(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result;
+                document.getElementById('preview-file-name').textContent = file.name;
+                document.getElementById('image-preview-box').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.clearImageSelection = function() {
+            selectedImageBase64 = null;
+            document.getElementById('chat-image-input').value = '';
+            document.getElementById('image-preview-box').classList.add('hidden');
+        }
+
+        window.sendChatMessage = async function() {
+            let inputField = document.getElementById('chat-input-msg');
+            let text = inputField.value.trim();
+
+            if (!text && !selectedImageBase64) return;
+            if (!activeChatOrderId) return;
+
+            let msgData = {
+                text: text,
+                sender: 'customer',
+                timestamp: serverTimestamp()
+            };
+
+            if (selectedImageBase64) {
+                msgData.imageUrl = selectedImageBase64;
+            }
+
+            try {
+                inputField.value = '';
+                clearImageSelection();
+                await addDoc(collection(db, "orders", activeChatOrderId, "messages"), msgData);
+            } catch (err) {
+                alert('Failed to send message: ' + err.message);
             }
         }
     </script>

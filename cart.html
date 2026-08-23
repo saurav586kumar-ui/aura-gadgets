@@ -52,10 +52,46 @@
             <div class="lg:col-span-1">
                 <div class="unshaped-card p-6 sticky top-24 space-y-4">
                     <h2 class="text-xl font-black font-brand text-gray-900">Order Summary</h2>
+                    
+                    <!-- Wallet Balance Section -->
+                    <div class="space-y-2 bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">💰</span>
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Aura Wallet</p>
+                                    <p id="wallet-balance-display" class="text-xs font-black text-gray-900">₹0</p>
+                                </div>
+                            </div>
+                            <label id="wallet-checkbox-wrapper" class="hidden flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-xl border border-emerald-200 shadow-sm">
+                                <input type="checkbox" id="use-wallet-checkbox" onchange="toggleWalletUsage()" class="text-emerald-600 rounded">
+                                <span class="text-[11px] font-bold text-emerald-800">Use</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Gift Card / Coupon Section -->
+                    <div class="space-y-2 bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-indigo-700">Have a Gift Card / Coupon?</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="coupon-input" placeholder="e.g. AURA100 / GIFT500" class="flex-1 px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs uppercase focus:outline-none focus:border-indigo-500 font-bold">
+                            <button onclick="applyCoupon()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow">Apply</button>
+                        </div>
+                        <p id="coupon-msg" class="text-[10px] text-gray-500 mt-1 hidden"></p>
+                    </div>
+
                     <div class="space-y-2 text-xs text-gray-600 border-b border-indigo-50 pb-4">
                         <div class="flex justify-between">
                             <span>Subtotal</span>
                             <span id="summary-subtotal" class="font-bold">₹0</span>
+                        </div>
+                        <div id="discount-row" class="flex justify-between text-emerald-600 hidden">
+                            <span>Coupon Discount</span>
+                            <span id="summary-discount" class="font-bold">-₹0</span>
+                        </div>
+                        <div id="wallet-row" class="flex justify-between text-emerald-600 hidden">
+                            <span>Wallet Used</span>
+                            <span id="summary-wallet-used" class="font-bold">-₹0</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Shipping</span>
@@ -137,7 +173,7 @@
     <!-- Firebase SDK & Cart Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
@@ -152,14 +188,48 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        document.addEventListener("DOMContentLoaded", function() {
+        let appliedDiscountAmount = 0;
+        let appliedCouponCode = "";
+        let userWalletBalance = 0;
+        let isWalletUsed = false;
+        let userDocId = null;
+
+        document.addEventListener("DOMContentLoaded", async function() {
+            await fetchUserWallet();
             loadCartItems();
 
-            // Button Event Listeners attached safely
             document.getElementById('proceed-checkout-btn').addEventListener('click', proceedToCheckout);
             document.getElementById('close-modal-btn').addEventListener('click', closeCheckoutModal);
             document.getElementById('place-order-btn').addEventListener('click', placeOrder);
         });
+
+        async function fetchUserWallet() {
+            let deviceId = localStorage.getItem('aura_device_id');
+            if (!deviceId) return;
+
+            try {
+                const q = query(collection(db, "users"), where("deviceId", "==", deviceId));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    let userDoc = querySnapshot.docs[0];
+                    userDocId = userDoc.id;
+                    let userData = userDoc.data();
+                    userWalletBalance = userData.walletBalance || 0;
+
+                    document.getElementById('wallet-balance-display').textContent = '₹' + userWalletBalance.toLocaleString();
+                    if (userWalletBalance > 0) {
+                        document.getElementById('wallet-checkbox-wrapper').classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching wallet:", err);
+            }
+        }
+
+        window.toggleWalletUsage = function() {
+            isWalletUsed = document.getElementById('use-wallet-checkbox').checked;
+            loadCartItems();
+        }
 
         function loadCartItems() {
             let cart = JSON.parse(localStorage.getItem('aura_cart')) || [];
@@ -211,7 +281,23 @@
             });
 
             subtotalElem.textContent = '₹' + subtotal.toLocaleString();
-            totalElem.textContent = '₹' + subtotal.toLocaleString();
+            
+            // Calculation with Coupon and Wallet
+            let afterDiscount = Math.max(0, subtotal - appliedDiscountAmount);
+            let walletDeducted = 0;
+            let walletRow = document.getElementById('wallet-row');
+            let walletUsedElem = document.getElementById('summary-wallet-used');
+
+            if (isWalletUsed && userWalletBalance > 0) {
+                walletDeducted = Math.min(afterDiscount, userWalletBalance);
+                walletRow.classList.remove('hidden');
+                walletUsedElem.textContent = '-₹' + walletDeducted.toLocaleString();
+            } else {
+                walletRow.classList.add('hidden');
+            }
+
+            let finalTotal = Math.max(0, afterDiscount - walletDeducted);
+            totalElem.textContent = '₹' + finalTotal.toLocaleString();
         }
 
         window.updateQty = function(index, change) {
@@ -226,6 +312,57 @@
             let cart = JSON.parse(localStorage.getItem('aura_cart')) || [];
             cart.splice(index, 1);
             localStorage.setItem('aura_cart', JSON.stringify(cart));
+            loadCartItems();
+        }
+
+        window.applyCoupon = function() {
+            let code = document.getElementById('coupon-input').value.trim().toUpperCase();
+            let msgElem = document.getElementById('coupon-msg');
+            let discountRow = document.getElementById('discount-row');
+            let discountElem = document.getElementById('summary-discount');
+
+            let cart = JSON.parse(localStorage.getItem('aura_cart')) || [];
+            let subtotal = cart.reduce((acc, item) => {
+                let p = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
+                return acc + (p * (item.quantity || 1));
+            }, 0);
+
+            if (subtotal === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+
+            msgElem.classList.remove('hidden');
+
+            if (code === "AURA100") {
+                appliedDiscountAmount = 100;
+                appliedCouponCode = "AURA100";
+                msgElem.textContent = "✅ Coupon applied successfully! ₹100 off.";
+                msgElem.className = "text-[10px] text-green-600 mt-1 font-bold";
+                discountRow.classList.remove('hidden');
+                discountElem.textContent = "-₹100";
+            } else if (code === "GIFT500") {
+                appliedDiscountAmount = 500;
+                appliedCouponCode = "GIFT500";
+                msgElem.textContent = "✅ Gift Card applied successfully! ₹500 off.";
+                msgElem.className = "text-[10px] text-green-600 mt-1 font-bold";
+                discountRow.classList.remove('hidden');
+                discountElem.textContent = "-₹500";
+            } else if (code === "AURA20") {
+                appliedDiscountAmount = Math.round(subtotal * 0.20);
+                appliedCouponCode = "AURA20 (20% OFF)";
+                msgElem.textContent = "✅ 20% discount applied successfully!";
+                msgElem.className = "text-[10px] text-green-600 mt-1 font-bold";
+                discountRow.classList.remove('hidden');
+                discountElem.textContent = `-₹${appliedDiscountAmount}`;
+            } else {
+                appliedDiscountAmount = 0;
+                appliedCouponCode = "";
+                msgElem.textContent = "❌ Invalid Coupon or Gift Card code.";
+                msgElem.className = "text-[10px] text-red-500 mt-1 font-bold";
+                discountRow.classList.add('hidden');
+            }
+
             loadCartItems();
         }
 
@@ -281,12 +418,19 @@
             let itemsSummary = cart.map(i => `${i.name} (x${i.quantity || 1})`).join(', ');
             let totalAmount = document.getElementById('summary-total').textContent;
 
-            // Generate or get unique device identifier so orders stay isolated per device
             let deviceId = localStorage.getItem('aura_device_id');
             if (!deviceId) {
                 deviceId = 'dev_' + Math.random().toString(36).substring(2, 9);
                 localStorage.setItem('aura_device_id', deviceId);
             }
+
+            // Calculate wallet deducted amount for saving
+            let cartSubtotal = cart.reduce((acc, item) => {
+                let p = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
+                return acc + (p * (item.quantity || 1));
+            }, 0);
+            let afterDiscount = Math.max(0, cartSubtotal - appliedDiscountAmount);
+            let walletDeducted = (isWalletUsed && userWalletBalance > 0) ? Math.min(afterDiscount, userWalletBalance) : 0;
 
             let orderData = {
                 customerName: chosenAddress.name,
@@ -294,9 +438,12 @@
                 shippingAddress: `${chosenAddress.street}, ${chosenAddress.locality}, ${chosenAddress.city} - ${chosenAddress.pin}`,
                 itemsSummary: itemsSummary,
                 total: totalAmount,
+                couponApplied: appliedCouponCode || 'None',
+                discountAmount: appliedDiscountAmount,
+                walletUsed: walletDeducted,
                 paymentMethod: paymentMethod,
                 status: 'Dispatched',
-                deviceId: deviceId, // <--- Device ID added here successfully
+                deviceId: deviceId,
                 timestamp: Date.now(),
                 returnRequested: false
             };
@@ -306,7 +453,17 @@
                 btn.textContent = "Processing Order...";
                 btn.disabled = true;
 
+                // Save order
                 await addDoc(collection(db, "orders"), orderData);
+
+                // If wallet was used, deduct from user's Firebase wallet balance
+                if (walletDeducted > 0 && userDocId) {
+                    let newBalance = userWalletBalance - walletDeducted;
+                    await updateDoc(doc(db, "users", userDocId), {
+                        walletBalance: newBalance
+                    });
+                }
+
                 localStorage.removeItem('aura_cart'); // Clear cart
                 alert('Order Placed Successfully! 🎉 Admin will process it shortly.');
                 window.location.href = 'profile.html';

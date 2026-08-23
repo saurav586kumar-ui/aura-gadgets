@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraGadget | Online Gadget Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --secondary: #ec4899; --accent: #8b5cf6; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #f0f4ff 0%, #fdf2f8 50%, #f5f3ff 100%); color: #1e293b; overflow-x: hidden; min-height: 100vh; }
+        h1, h2, h3, .font-brand { font-family: 'Outfit', sans-serif; }
+
+        /* ORGANIC BLOBS & UN-SHAPED CONTAINERS */
+        .gadget-blob {
+            border-radius: 30% 70% 50% 50% / 40% 40% 60% 60%;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.1);
+        }
+        .gadget-blob:hover {
+            border-radius: 50% 50% 40% 60% / 50% 60% 40% 50%;
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -5px rgba(236, 72, 153, 0.2);
+        }
+
+        .unshaped-media {
+            border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+        .unshaped-media:hover {
+            border-radius: 55% 45% 45% 55% / 45% 55% 50% 50%;
+        }
+
+        /* HERO BANNER UNIQUE SHAPE */
+        .hero-banner-unique {
+            border-radius: 35px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1), rgba(139, 92, 246, 0.15));
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header (Admin Button Removed - Access via admin.html directly) -->
+    <header class="py-4 px-6 md:px-12 bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-indigo-100 flex items-center justify-between shadow-sm">
+        <a href="index.html" class="text-2xl font-black tracking-tight font-brand flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 animate-pulse"></span>
+            AURA<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600">GADGET</span>
+        </a>
+
+        <div class="flex items-center gap-3 md:gap-5">
+            <a href="cart.html" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-100 transition flex items-center gap-1.5 shadow-sm">
+                🛒 Cart <span id="cart-count" class="bg-indigo-600 text-white px-1.5 py-0.5 rounded-full text-[10px]">0</span>
+            </a>
+            <a href="profile.html" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-full hover:bg-pink-100 transition flex items-center gap-1.5 shadow-sm">
+                👤 My Profile
+            </a>
+        </div>
+    </header>
+
+    <!-- 1. CATEGORY SECTORS -->
+    <section class="py-10 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="mb-8 text-center">
+            <span class="text-xs font-extrabold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">Explore Collections</span>
+            <h2 class="text-3xl md:text-4xl font-black text-gray-900 mt-2 font-brand">Shop by Category 🛍️</h2>
+        </div>
+        <div id="category-boxes-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamically Loaded Categories -->
+        </div>
+    </section>
+
+    <!-- 2. UNIQUE INTERACTIVE HERO BANNER -->
+    <section class="py-6 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="hero-banner-unique p-8 md:p-12 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div class="max-w-xl text-center lg:text-left z-10">
+                <span class="px-3 py-1 bg-pink-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm">✨ Special Showcase Drop</span>
+                <h1 id="hero-banner-title" class="text-3xl md:text-5xl font-black text-gray-900 mt-3 font-brand leading-tight">Next-Gen Audio & Smart Tech</h1>
+                <p id="hero-banner-desc" class="text-gray-600 text-sm mt-3 leading-relaxed">Discover premium tech gadgets handpicked for your lifestyle. High performance, elegant designs, and unbeatable prices.</p>
+                <div class="mt-6 flex flex-wrap gap-4 justify-center lg:justify-start">
+                    <button onclick="document.getElementById('product-grid').scrollIntoView({behavior: 'smooth'})" class="px-7 py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-indigo-200 hover:scale-105 transition">
+                        Explore All Gadgets &darr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Hero Showcase Product Card -->
+            <div id="hero-showcase-card" class="w-full max-w-xs gadget-blob p-5 border border-white flex flex-col items-center text-center cursor-pointer shadow-xl z-10">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Background decorative blur circles -->
+            <div class="absolute -top-20 -left-20 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+            <div class="absolute -bottom-20 -right-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+        </div>
+    </section>
+
+    <!-- 3. ALL PRODUCTS GRID -->
+    <section class="py-16 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="mb-12 text-center">
+            <span class="text-xs font-extrabold text-pink-600 uppercase tracking-widest bg-pink-50 px-3 py-1 rounded-full border border-pink-100">Featured Store</span>
+            <h2 class="text-4xl font-black text-gray-900 mt-2 font-brand">Trending Gadgets 🔥</h2>
+        </div>
+
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Dynamically Loaded Products with Center Prices -->
+        </div>
+    </section>
+
+    <!-- PRODUCT DETAIL POPUP MODAL -->
+    <div id="product-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto transition-all duration-300 opacity-0">
+        <div class="bg-white border border-indigo-100 w-full max-w-4xl relative shadow-2xl rounded-3xl p-6 md:p-10 transform scale-95 transition-transform duration-300" id="modal-container">
+            <button onclick="closeModal()" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-pink-100 hover:text-pink-600 transition font-bold z-20">
+                ✕
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <!-- Left: Media -->
+                <div class="space-y-4">
+                    <div class="w-full aspect-square unshaped-media bg-slate-100 border border-indigo-50 shadow-inner">
+                        <img id="modal-main-img" src="" class="w-full h-full object-cover" alt="Product">
+                    </div>
+                    <div id="modal-thumbnails" class="flex gap-2 overflow-x-auto pb-2 justify-center"></div>
+                </div>
+
+                <!-- Right: Details -->
+                <div class="flex flex-col justify-between">
+                    <div>
+                        <span id="modal-category" class="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full uppercase tracking-wider border border-indigo-100"></span>
+                        <h2 id="modal-title" class="text-2xl md:text-3xl font-black text-gray-900 mt-3 font-brand leading-snug"></h2>
+                        
+                        <!-- Price Centered Container -->
+                        <div class="flex items-center justify-center gap-4 my-5 bg-gradient-to-r from-indigo-50 to-pink-50 py-3 rounded-2xl border border-indigo-100/60">
+                            <span id="modal-price" class="text-3xl font-black text-pink-600"></span>
+                            <span id="modal-actual-price" class="text-sm text-gray-400 line-through font-bold"></span>
+                        </div>
+
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Overview</p>
+                        <p id="modal-desc" class="text-gray-600 text-sm leading-relaxed mb-6"></p>
+                    </div>
+
+                    <button onclick="addToCartFromModal()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-extrabold text-xs uppercase tracking-widest rounded-full hover:opacity-95 transition shadow-lg shadow-indigo-200">
+                        Add to Cart 🛒
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-12 border-t border-indigo-100 text-gray-500 text-xs mt-16 bg-white font-brand tracking-widest uppercase">
+        <p>&copy; 2026 AURA GADGET. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <!-- FIREBASE & APP SCRIPT LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
+            authDomain: "auragadgets-c3a7c.firebaseapp.com",
+            projectId: "auragadgets-c3a7c",
+            storageBucket: "auragadgets-c3a7c.firebasestorage.app",
+            messagingSenderId: "119527057995",
+            appId: "1:119527057995:web:5f3b2173af91861d1cbbce",
+            measurementId: "G-54CD81QGGR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentActiveModalProduct = null;
+
+        document.addEventListener("DOMContentLoaded", async function() {
+            updateCartBadge();
+            let products = [];
+            
+            try {
+                // Fetching products from Firebase Firestore collection 'products'
+                const querySnapshot = await getDocs(collection(db, "products"));
+                querySnapshot.forEach((doc) => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+            } catch (error) {
+                console.log("Firestore error, falling back to localStorage:", error);
+                products = JSON.parse(localStorage.getItem('aura_products')) || [];
+            }
+
+            // Fallback or backup sync
+            if (products.length === 0) {
+                products = JSON.parse(localStorage.getItem('aura_products')) || [];
+            }
+
+            renderStore(products);
+        });
+
+        function updateCartBadge() {
+            let cart = JSON.parse(localStorage.getItem('aura_cart')) || [];
+            let totalCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            document.getElementById('cart-count').textContent = totalCount;
+        }
+
+        function renderStore(products) {
+            // 1. Render Categories
+            let categories = {};
+            products.forEach(p => {
+                let cat = p.category || 'General';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(p);
+            });
+
+            let catContainer = document.getElementById('category-boxes-container');
+            catContainer.innerHTML = '';
+
+            if (Object.keys(categories).length === 0) {
+                catContainer.innerHTML = `<div class="text-gray-400 text-xs col-span-full text-center py-6">No categories found. Add products via admin.html</div>`;
+            }
+
+            for (let catName in categories) {
+                let count = categories[catName].length;
+                let sampleImg = categories[catName][0].image;
+
+                catContainer.innerHTML += `
+                    <div onclick="window.location.href='category.html?name=${encodeURIComponent(catName)}'" class="gadget-blob p-5 cursor-pointer flex items-center gap-4 group">
+                        <div class="w-16 h-16 unshaped-media bg-slate-200 flex-shrink-0">
+                            <img src="${sampleImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-indigo-600 font-extrabold uppercase tracking-wider">Collection</span>
+                            <h3 class="text-lg font-black text-gray-900 font-brand group-hover:text-pink-600 transition">${catName}</h3>
+                            <p class="text-xs text-gray-500">${count} Items Available</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. Render Hero Showcase Product
+            let showcaseCard = document.getElementById('hero-showcase-card');
+            if (products.length > 0) {
+                let p = products[0];
+                window.currentProductsList = products; // Global reference for modal
+                showcaseCard.innerHTML = `
+                    <div onclick='openProductModalIndex(0)' class="w-full cursor-pointer">
+                        <div class="w-full h-40 unshaped-media mb-3 bg-slate-100">
+                            <img src="${p.image}" class="w-full h-full object-cover">
+                        </div>
+                        <span class="text-[9px] font-extrabold text-indigo-600 uppercase tracking-widest">${p.category}</span>
+                        <h4 class="font-black text-gray-900 text-sm line-clamp-1 mt-0.5">${p.name}</h4>
+                        <div class="flex items-center justify-center gap-2 mt-2">
+                            <span class="text-base font-black text-pink-600">${p.price}</span>
+                            <span class="text-xs text-gray-400 line-through font-bold">${p.actualPrice || ''}</span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('hero-banner-title').textContent = p.name;
+                document.getElementById('hero-banner-desc').textContent = p.description || 'Explore our flagship product drop with high-end build quality.';
+            } else {
+                showcaseCard.innerHTML = `<div class="py-10 text-xs text-gray-500">No showcase product available. Add products in admin.html</div>`;
+            }
+
+            // 3. Render All Products Grid (Centered Price)
+            let productGrid = document.getElementById('product-grid');
+            productGrid.innerHTML = '';
+
+            if (products.length === 0) {
+                productGrid.innerHTML = `<div class="col-span-full text-center py-16 text-gray-400 font-bold uppercase text-xs tracking-wider">No gadgets found in store inventory. Use admin.html to add products.</div>`;
+                return;
+            }
+
+            products.forEach((prod, idx) => {
+                productGrid.innerHTML += `
+                    <div onclick='openProductModalIndex(${idx})' class="gadget-blob p-5 cursor-pointer flex flex-col justify-between group">
+                        <div>
+                            <div class="relative w-full h-44 unshaped-media bg-slate-100 mb-4">
+                                <img src="${prod.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt="${prod.name}">
+                                <span class="absolute top-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur text-indigo-700 text-[9px] font-black rounded-full shadow-sm uppercase tracking-wider">${prod.category}</span>
+                            </div>
+                            <h4 class="font-black text-gray-900 text-base line-clamp-1 group-hover:text-pink-600 transition font-brand">${prod.name}</h4>
+                            <p class="text-gray-500 text-xs line-clamp-2 mt-1 leading-relaxed">${prod.description}</p>
+                        </div>
+                        
+                        <!-- PRICE FIXED & CENTERED -->
+                        <div class="mt-4 pt-3 border-t border-indigo-100/60 flex items-center justify-center gap-3">
+                            <span class="text-xl font-black text-pink-600">${prod.price}</span>
+                            <span class="text-xs text-gray-400 line-through font-bold">${prod.actualPrice || ''}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.openProductModalIndex = function(index) {
+            let prod = window.currentProductsList[index];
+            currentActiveModalProduct = prod;
+
+            document.getElementById('modal-category').textContent = prod.category;
+            document.getElementById('modal-title').textContent = prod.name;
+            document.getElementById('modal-price').textContent = prod.price;
+            document.getElementById('modal-actual-price').textContent = prod.actualPrice || '';
+            document.getElementById('modal-desc').textContent = prod.description || 'No detailed specifications provided.';
+            
+            let mainImg = document.getElementById('modal-main-img');
+            mainImg.src = prod.image;
+
+            let thumbContainer = document.getElementById('modal-thumbnails');
+            thumbContainer.innerHTML = '';
+            
+            let allImages = [prod.image];
+            if (prod.extraImages) {
+                try {
+                    let parsedExtra = JSON.parse(prod.extraImages);
+                    if (Array.isArray(parsedExtra)) allImages = allImages.concat(parsedExtra);
+                } catch(e) {}
+            }
+
+            allImages.forEach(imgSrc => {
+                thumbContainer.innerHTML += `
+                    <div class="w-12 h-12 unshaped-media bg-slate-100 cursor-pointer border border-indigo-100 hover:border-pink-500 transition">
+                        <img src="${imgSrc}" onclick="document.getElementById('modal-main-img').src='${imgSrc}'" class="w-full h-full object-cover">
+                    </div>
+                `;
+            });
+
+            let modal = document.getElementById('product-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modal-container').classList.remove('scale-95');
+            }, 10);
+        }
+
+        window.closeModal = function() {
+            let modal = document.getElementById('product-modal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-container').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 250);
+        }
+
+        window.addToCartFromModal = function() {
+            if (!currentActiveModalProduct) return;
+            let cart = JSON.parse(localStorage.getItem('aura_cart')) || [];
+            let existingItem = cart.find(item => item.name === currentActiveModalProduct.name);
+            
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                cart.push({ ...currentActiveModalProduct, quantity: 1 });
+            }
+
+            localStorage.setItem('aura_cart', JSON.stringify(cart));
+            updateCartBadge();
+            alert('Added to Cart Successfully! 🛍️');
+            closeModal();
+        }
+    </script>
+</body>
+</html>

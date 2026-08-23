@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | AuraGadget Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; }
+        h1, h2, h3, .font-brand { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="p-6 md:p-12 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b pb-4 gap-4">
+        <div>
+            <h1 class="text-3xl font-black font-brand text-gray-900">Admin Control - Orders & Returns ⚙️</h1>
+            <p class="text-xs text-gray-500">Manage user orders, update tracking statuses, and process return requests.</p>
+        </div>
+        <a href="index.html" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl">View Store 🏠</a>
+    </div>
+
+    <!-- Search Bar Section -->
+    <div class="mb-6">
+        <input 
+            type="text" 
+            id="order-search" 
+            onkeyup="filterOrders()" 
+            placeholder="🔍 Search by Order ID, Customer Name, Phone, or Address..." 
+            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-indigo-500 shadow-sm"
+        >
+    </div>
+
+    <div id="admin-orders-list" class="space-y-6">
+        <p class="text-xs text-gray-400">Loading incoming customer orders...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
+            authDomain: "auragadgets-c3a7c.firebaseapp.com",
+            projectId: "auragadgets-c3a7c",
+            storageBucket: "auragadgets-c3a7c.firebasestorage.app",
+            messagingSenderId: "119527057995",
+            appId: "1:119527057995:web:5f3b2173af91861d1cbbce",
+            measurementId: "G-54CD81QGGR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let allOrders = []; // Global variable to store fetched orders for filtering
+
+        document.addEventListener("DOMContentLoaded", async function() {
+            loadAdminOrders();
+        });
+
+        async function loadAdminOrders() {
+            let container = document.getElementById('admin-orders-list');
+            try {
+                const querySnapshot = await getDocs(collection(db, "orders"));
+                allOrders = [];
+                querySnapshot.forEach((docSnap) => {
+                    allOrders.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                displayOrders(allOrders);
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p class="text-xs text-red-500">Error loading orders: ${err.message}</p>`;
+            }
+        }
+
+        function displayOrders(ordersToDisplay) {
+            let container = document.getElementById('admin-orders-list');
+            container.innerHTML = '';
+            
+            if (ordersToDisplay.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">No matching orders found.</p>`;
+                return;
+            }
+
+            ordersToDisplay.forEach(order => {
+                container.innerHTML += `
+                    <div class="order-card bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
+                            <div>
+                                <span class="text-xs font-bold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">Order ID: ${order.id}</span>
+                                <p class="text-xs text-gray-500 mt-1">Customer: ${order.customerName || 'N/A'} (${order.customerPhone || 'N/A'})</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5">📍 Address: ${order.shippingAddress || 'N/A'}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <select id="status-${order.id}" class="px-3 py-2 border rounded-xl text-xs font-bold bg-gray-50">
+                                    <option value="Dispatched" ${order.status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
+                                    <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
+                                    <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                                </select>
+                                <button onclick="updateStatus('${order.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow">Update Status</button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-700">
+                            <p class="font-bold mb-1">Purchased Items:</p>
+                            <p>${order.itemsSummary || 'Gadget Order'}</p>
+                            <p class="mt-2 font-black text-sm text-pink-600">Total Amount: ${order.total}</p>
+                        </div>
+                        ${order.returnRequested ? `
+                            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs font-bold text-amber-900">⚠️ Return Requested Reason: ${order.returnReason}</p>
+                                    <p class="text-[10px] text-amber-700 mt-0.5">Status: ${order.returnStatus || 'Pending'}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="handleReturn('${order.id}', 'Accepted')" class="px-3 py-1.5 bg-green-600 text-white font-bold text-xs rounded-lg">Accept Return</button>
+                                    <button onclick="handleReturn('${order.id}', 'Rejected')" class="px-3 py-1.5 bg-red-600 text-white font-bold text-xs rounded-lg">Reject Return</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        // Real-time search filter function
+        window.filterOrders = function() {
+            let searchQuery = document.getElementById('order-search').value.toLowerCase();
+            
+            let filtered = allOrders.filter(order => {
+                let idMatch = order.id.toLowerCase().includes(searchQuery);
+                let nameMatch = (order.customerName || '').toLowerCase().includes(searchQuery);
+                let phoneMatch = (order.customerPhone || '').toLowerCase().includes(searchQuery);
+                let addressMatch = (order.shippingAddress || '').toLowerCase().includes(searchQuery);
+                let itemsMatch = (order.itemsSummary || '').toLowerCase().includes(searchQuery);
+
+                return idMatch || nameMatch || phoneMatch || addressMatch || itemsMatch;
+            });
+
+            displayOrders(filtered);
+        }
+
+        window.updateStatus = async function(orderId) {
+            let newStatus = document.getElementById(`status-${orderId}`).value;
+            try {
+                await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+                alert('Order status updated successfully!');
+                loadAdminOrders();
+            } catch (err) {
+                alert('Failed to update: ' + err.message);
+            }
+        }
+
+        window.handleReturn = async function(orderId, decision) {
+            try {
+                await updateDoc(doc(db, "orders", orderId), { returnStatus: decision });
+                alert(`Return request ${decision} successfully!`);
+                loadAdminOrders();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

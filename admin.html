@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Admin Dashboard | AuraGadgets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0c0a10; color: #f3f4f6; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0c0a10; }
+        ::-webkit-scrollbar-thumb { background: #b19cff55; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen p-6 md:p-12">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-white/10 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold">⚙️ Advanced Admin Panel (Cloud Live)</h1>
+                <p class="text-xs text-gray-400 mt-1">Manage products, gallery uploads, inventory, and Hero Banners synced via Firebase.</p>
+            </div>
+            <a href="index.html" target="_blank" class="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold hover:bg-white/10 transition backdrop-blur-md text-[#b19cff]">
+                View Live Shop &rarr;
+            </a>
+        </div>
+
+        <!-- HERO BANNER MANAGEMENT SECTION -->
+        <div class="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl mb-12">
+            <h2 class="text-xl font-bold mb-2 text-[#b19cff]">🖼️ Hero Banner Manager</h2>
+            <p class="text-xs text-gray-400 mb-6">Select products from your inventory to showcase them on the live homepage hero slider.</p>
+            
+            <div id="banner-manager-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamic Banner Control Cards -->
+            </div>
+        </div>
+
+        <!-- Add / Edit Product Form Container -->
+        <div class="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl mb-12">
+            <h2 id="form-title" class="text-xl font-bold mb-6 text-[#ffb4a2]">➕ Add New Product</h2>
+            
+            <form id="product-form" class="space-y-6">
+                <input type="hidden" id="edit-product-id" value="">
+                <input type="hidden" id="p-image-base64" value="">
+                <input type="hidden" id="p-extra-images-base64" value="">
+                <input type="hidden" id="p-video-base64" value="">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Product Name *</label>
+                        <input type="text" id="p-name" required placeholder="e.g. Cyber Transparent TWS" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#b19cff]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Category *</label>
+                        <select id="p-category" class="w-full px-4 py-3 bg-[#13111c] border border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#b19cff] mb-2">
+                            <option value="Spatial Sound">Spatial Sound</option>
+                            <option value="Golden Hour Glow">Golden Hour Glow</option>
+                            <option value="Aluminum Stand">Aluminum Stand</option>
+                            <option value="Mechanical Switches">Mechanical Switches</option>
+                        </select>
+                        <input type="text" id="p-new-category" placeholder="Or type new category name..." class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs focus:outline-none focus:border-[#b19cff]" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Actual Price (MRP) *</label>
+                        <input type="text" id="p-actual-price" required placeholder="e.g. ₹3,999" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#b19cff]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Discounted / Selling Price *</label>
+                        <input type="text" id="p-price" required placeholder="e.g. ₹2,499" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#b19cff]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Description *</label>
+                    <textarea id="p-desc" rows="3" required placeholder="Detailed overview of the product..." class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#b19cff]"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Specifications (Comma separated)</label>
+                    <input type="text" id="p-specs" placeholder="e.g. Bluetooth 5.3, 40H Playtime, Transparent Shell" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#b19cff]">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Main Image File (Index View) *</label>
+                        <input type="file" id="p-image-file" accept="image/*" class="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-gray-300 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#b19cff] file:text-gray-950 hover:file:bg-white cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Extra Gallery Images (Multiple)</label>
+                        <input type="file" id="p-extra-files" accept="image/*" multiple class="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-gray-300 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#b19cff] file:text-gray-950 hover:file:bg-white cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Product Video File (Optional)</label>
+                        <input type="file" id="p-video-file" accept="video/*" class="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-gray-300 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#ffb4a2] file:text-gray-950 hover:file:bg-white cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="flex gap-4 pt-2">
+                    <button type="submit" id="submit-btn" class="flex-1 py-3.5 bg-gradient-to-r from-[#b19cff] to-[#ffb4a2] text-gray-950 font-bold text-sm rounded-xl hover:opacity-90 transition shadow-lg">
+                        Publish Product to Cloud 🚀
+                    </button>
+                    <button type="button" id="cancel-edit" onclick="resetForm()" class="hidden px-6 py-3.5 bg-white/10 text-gray-300 font-bold text-sm rounded-xl hover:bg-white/20 transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Product Management Table Section -->
+        <div class="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl">
+            <h2 class="text-xl font-bold mb-6">📦 Existing Cloud Inventory Management</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-white/5 text-xs uppercase text-[#ffb4a2] border-b border-white/10">
+                        <tr>
+                            <th class="p-4">Product</th>
+                            <th class="p-4">Category</th>
+                            <th class="p-4">Price</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-product-table" class="divide-y divide-white/5">
+                        <!-- Dynamic items loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Setup -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
+            authDomain: "auragadgets-c3a7c.firebaseapp.com",
+            projectId: "auragadgets-c3a7c",
+            storageBucket: "auragadgets-c3a7c.firebasestorage.app",
+            messagingSenderId: "119527057995",
+            appId: "1:119527057995:web:5f3b2173af91861d1cbbce",
+            measurementId: "G-54CD81QGGR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let cloudProducts = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadCloudProducts();
+        });
+
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function updateCategoryDropdown(products) {
+            let categories = new Set(["Spatial Sound", "Golden Hour Glow", "Aluminum Stand", "Mechanical Switches"]);
+            products.forEach(p => { if(p.category) categories.add(p.category); });
+
+            const select = document.getElementById('p-category');
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                let opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                select.appendChild(opt);
+            });
+        }
+
+        document.getElementById('product-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            let categoryInput = document.getElementById('p-new-category').value.trim();
+            let selectedCategory = categoryInput !== "" ? categoryInput : document.getElementById('p-category').value;
+
+            let editId = document.getElementById('edit-product-id').value;
+            let existingProd = cloudProducts.find(p => p.id === editId) || {};
+
+            let imageBase64 = document.getElementById('p-image-base64').value;
+            let extraImagesBase64 = document.getElementById('p-extra-images-base64').value;
+            let videoBase64 = document.getElementById('p-video-base64').value;
+
+            const mainImageFile = document.getElementById('p-image-file').files[0];
+            if (mainImageFile) {
+                imageBase64 = await convertFileToBase64(mainImageFile);
+            } else if (editId !== "" && !imageBase64) {
+                imageBase64 = existingProd.image || "";
+            }
+
+            const extraFiles = document.getElementById('p-extra-files').files;
+            if (extraFiles.length > 0) {
+                let extraArr = [];
+                for (let i = 0; i < extraFiles.length; i++) {
+                    let b64 = await convertFileToBase64(extraFiles[i]);
+                    extraArr.push(b64);
+                }
+                extraImagesBase64 = JSON.stringify(extraArr);
+            } else if (editId !== "" && !extraImagesBase64) {
+                extraImagesBase64 = existingProd.extraImages || "[]";
+            }
+
+            const videoFile = document.getElementById('p-video-file').files[0];
+            if (videoFile) {
+                videoBase64 = await convertFileToBase64(videoFile);
+            } else if (editId !== "" && !videoBase64) {
+                videoBase64 = existingProd.video || "";
+            }
+
+            // Fixed undefined values by providing fallback defaults
+            const productData = {
+                name: document.getElementById('p-name').value || "",
+                category: selectedCategory || "General",
+                actualPrice: document.getElementById('p-actual-price').value || "",
+                price: document.getElementById('p-price').value || "",
+                description: document.getElementById('p-desc').value || "",
+                specs: document.getElementById('p-specs').value || "",
+                image: imageBase64 || "",
+                extraImages: extraImagesBase64 || "[]",
+                video: videoBase64 || "",
+                status: existingProd.status !== undefined ? existingProd.status : "In Stock",
+                isBanner: existingProd.isBanner !== undefined ? existingProd.isBanner : false
+            };
+
+            let submitBtn = document.getElementById('submit-btn');
+            submitBtn.textContent = "Saving to Cloud...";
+            submitBtn.disabled = true;
+
+            try {
+                if (editId === "") {
+                    await addDoc(collection(db, "products"), productData);
+                    alert('Product successfully published to cloud! 🚀');
+                } else {
+                    await updateDoc(doc(db, "products", editId), productData);
+                    alert('Product successfully updated on cloud! 🔄');
+                }
+
+                resetForm();
+                loadCloudProducts();
+            } catch (err) {
+                alert('Error saving product: ' + err.message);
+            } finally {
+                submitBtn.textContent = "Publish Product to Cloud 🚀";
+                submitBtn.disabled = false;
+            }
+        });
+
+        async function loadCloudProducts() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                cloudProducts = [];
+                querySnapshot.forEach((docSnap) => {
+                    cloudProducts.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                updateCategoryDropdown(cloudProducts);
+                loadBannerManager();
+                renderProductTable();
+            } catch (err) {
+                console.error("Error loading cloud products:", err);
+            }
+        }
+
+        window.loadBannerManager = function() {
+            const container = document.getElementById('banner-manager-grid');
+            container.innerHTML = '';
+
+            if (cloudProducts.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500">No products available to assign to banner.</p>`;
+                return;
+            }
+
+            cloudProducts.forEach((prod) => {
+                let isBannerActive = prod.isBanner === true;
+                let btnText = isBannerActive ? "❌ Remove from Banner" : "✨ Add to Hero Banner";
+                let btnClass = isBannerActive 
+                    ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20" 
+                    : "bg-purple-500/15 border-purple-500/30 text-[#b19cff] hover:bg-purple-500/25";
+
+                let card = `
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <img src="${prod.image || 'https://images.unsplash.com/photo-1572536147248-ac59a8abfa4b?auto=format&fit=crop&w=200&q=80'}" class="w-12 h-12 rounded-xl object-cover bg-white/5 border border-white/10 flex-shrink-0">
+                            <div class="overflow-hidden">
+                                <div class="font-bold text-xs text-white truncate">${prod.name}</div>
+                                <div class="text-[10px] text-gray-400">${isBannerActive ? '🟢 Active in Banner' : '⚪ Not in Banner'}</div>
+                            </div>
+                        </div>
+                        <button onclick="toggleBannerStatus('${prod.id}')" class="px-3 py-1.5 border rounded-xl text-[11px] font-semibold transition flex-shrink-0 ${btnClass}">
+                            ${btnText}
+                        </button>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        window.toggleBannerStatus = async function(id) {
+            let prod = cloudProducts.find(p => p.id === id);
+            if (!prod) return;
+
+            try {
+                let newBannerState = !prod.isBanner;
+                await updateDoc(doc(db, "products", id), { isBanner: newBannerState });
+                loadCloudProducts();
+            } catch (err) {
+                alert('Error updating banner status: ' + err.message);
+            }
+        }
+
+        function renderProductTable() {
+            const tbody = document.getElementById('admin-product-table');
+            tbody.innerHTML = '';
+
+            if (cloudProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500">No products found in cloud database. Add one above!</td></tr>`;
+                return;
+            }
+
+            cloudProducts.forEach((prod) => {
+                let statusBadge = prod.status === "Out of Stock" 
+                    ? `<span class="px-2.5 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-full font-semibold">Out of Stock</span>`
+                    : `<span class="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-full font-semibold">In Stock</span>`;
+
+                let row = `
+                    <tr class="hover:bg-white/[0.02] transition">
+                        <td class="p-4 flex items-center gap-3">
+                            <img src="${prod.image || 'https://images.unsplash.com/photo-1572536147248-ac59a8abfa4b?auto=format&fit=crop&w=200&q=80'}" class="w-10 h-10 rounded-lg object-cover bg-white/5 border border-white/10" alt="">
+                            <div>
+                                <div class="font-bold text-white line-clamp-1">${prod.name}</div>
+                                <div class="text-[11px] text-gray-400">MRP: <span class="line-through">${prod.actualPrice || 'N/A'}</span></div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-xs text-gray-300">${prod.category}</td>
+                        <td class="p-4 font-bold text-[#ffb4a2]">${prod.price}</td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4 text-center space-x-2">
+                            <button onclick="toggleStock('${prod.id}')" class="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-lg text-xs hover:bg-amber-500/20 transition">Stock</button>
+                            <button onclick="editProduct('${prod.id}')" class="px-3 py-1 bg-purple-500/10 border border-purple-500/20 text-[#b19cff] rounded-lg text-xs hover:bg-purple-500/20 transition">Edit</button>
+                            <button onclick="deleteProduct('${prod.id}')" class="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-xs hover:bg-red-500/20 transition">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        window.toggleStock = async function(id) {
+            let prod = cloudProducts.find(p => p.id === id);
+            if (!prod) return;
+
+            try {
+                let newStatus = prod.status === "Out of Stock" ? "In Stock" : "Out of Stock";
+                await updateDoc(doc(db, "products", id), { status: newStatus });
+                loadCloudProducts();
+            } catch (err) {
+                alert('Error updating stock: ' + err.message);
+            }
+        }
+
+        window.editProduct = function(id) {
+            let prod = cloudProducts.find(p => p.id === id);
+            if (!prod) return;
+
+            document.getElementById('edit-product-id').value = prod.id;
+            document.getElementById('p-name').value = prod.name || '';
+            document.getElementById('p-category').value = prod.category || 'General';
+            document.getElementById('p-actual-price').value = prod.actualPrice || '';
+            document.getElementById('p-price').value = prod.price || '';
+            document.getElementById('p-desc').value = prod.description || '';
+            document.getElementById('p-specs').value = prod.specs || '';
+            
+            document.getElementById('p-image-base64').value = prod.image || '';
+            document.getElementById('p-extra-images-base64').value = prod.extraImages || '[]';
+            document.getElementById('p-video-base64').value = prod.video || '';
+
+            document.getElementById('form-title').textContent = "✏️ Edit Product on Cloud";
+            document.getElementById('submit-btn').textContent = "Update Product on Cloud 🔄";
+            document.getElementById('cancel-edit').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.deleteProduct = async function(id) {
+            if(confirm('Are you sure you want to delete this product from cloud?')) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    alert('Product deleted successfully from cloud!');
+                    loadCloudProducts();
+                } catch (err) {
+                    alert('Error deleting product: ' + err.message);
+                }
+            }
+        }
+
+        window.resetForm = function() {
+            document.getElementById('product-form').reset();
+            document.getElementById('edit-product-id').value = "";
+            document.getElementById('p-image-base64').value = "";
+            document.getElementById('p-extra-images-base64').value = "";
+            document.getElementById('p-video-base64').value = "";
+            document.getElementById('form-title').textContent = "➕ Add New Product";
+            document.getElementById('submit-btn').textContent = "Publish Product to Cloud 🚀";
+            document.getElementById('cancel-edit').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

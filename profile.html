@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile & Orders | AuraGadget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --secondary: #ec4899; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #f0f4ff 0%, #fdf2f8 50%, #f5f3ff 100%); color: #1e293b; min-height: 100vh; }
+        h1, h2, h3, .font-brand { font-family: 'Outfit', sans-serif; }
+        .unshaped-card {
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.08);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="py-4 px-6 md:px-12 bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-indigo-100 flex items-center justify-between shadow-sm">
+        <a href="index.html" class="text-2xl font-black tracking-tight font-brand flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 animate-pulse"></span>
+            AURA<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600">GADGET</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <a href="cart.html" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-100 transition shadow-sm">🛒 Cart</a>
+            <a href="index.html" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-full hover:bg-pink-100 transition shadow-sm">🏠 Home</a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1 space-y-3">
+            <div class="unshaped-card p-4 space-y-2">
+                <button onclick="switchTab('profile')" id="btn-profile" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md">👤 Personal Profile</button>
+                <button onclick="switchTab('addresses')" id="btn-addresses" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">📍 My Addresses</button>
+                <button onclick="switchTab('orders')" id="btn-orders" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">📦 My Orders & Returns</button>
+                <button onclick="switchTab('about')" id="btn-about" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">ℹ️ About Us</button>
+                <button onclick="switchTab('contact')" id="btn-contact" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">✉️ Contact Us</button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="lg:col-span-3 space-y-6">
+
+            <!-- 1. Profile Section -->
+            <div id="section-profile" class="unshaped-card p-6 md:p-8">
+                <h2 class="text-2xl font-black font-brand text-gray-900 mb-2">Personal Details</h2>
+                <p class="text-xs text-gray-500 mb-6">Manage your personal identification for seamless checkout.</p>
+                <form id="profile-form" onsubmit="saveProfile(event)" class="space-y-4 max-w-xl">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Full Name</label>
+                        <input type="text" id="prof-name" required class="w-full px-4 py-3 rounded-xl border border-indigo-100 bg-white/50 focus:outline-none focus:border-indigo-500 text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Mobile Number</label>
+                        <input type="tel" id="prof-phone" required class="w-full px-4 py-3 rounded-xl border border-indigo-100 bg-white/50 focus:outline-none focus:border-indigo-500 text-sm font-semibold">
+                    </div>
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-200 hover:opacity-95 transition">Save Profile 💾</button>
+                </form>
+            </div>
+
+            <!-- 2. Addresses Section -->
+            <div id="section-addresses" class="unshaped-card p-6 md:p-8 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black font-brand text-gray-900">Delivery Addresses</h2>
+                        <p class="text-xs text-gray-500">Save multiple addresses for quick order checkout.</p>
+                    </div>
+                    <button onclick="toggleAddressForm()" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow">+ Add New Address</button>
+                </div>
+
+                <div id="new-address-box" class="hidden mb-6 p-5 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                    <h3 class="font-black text-sm text-indigo-900 mb-4">Add New Delivery Location</h3>
+                    <form onsubmit="saveNewAddress(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="addr-name" placeholder="Contact Person Name" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="tel" id="addr-phone" placeholder="Mobile Number" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-street" placeholder="House No / Street Name" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-locality" placeholder="Locality / Landmark" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-city" placeholder="City" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-pin" placeholder="PIN Code" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <div class="col-span-full flex gap-3">
+                            <button type="submit" class="px-5 py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">Save Address</button>
+                            <button type="button" onclick="toggleAddressForm()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="addresses-list" class="space-y-4"></div>
+            </div>
+
+            <!-- 3. Orders Section -->
+            <div id="section-orders" class="unshaped-card p-6 md:p-8 hidden">
+                <h2 class="text-2xl font-black font-brand text-gray-900 mb-2">My Orders & History</h2>
+                <p class="text-xs text-gray-500 mb-6">Track status, chat for support, or raise return requests.</p>
+                <div id="orders-container" class="space-y-6"></div>
+            </div>
+
+            <!-- 4. About Section -->
+            <div id="section-about" class="unshaped-card p-6 md:p-8 hidden space-y-4">
+                <h2 class="text-2xl font-black font-brand text-gray-900">About AuraGadget</h2>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    Welcome to <strong class="text-indigo-600">AuraGadget</strong> – your premier online gadget store for next-generation audio devices, smart wearables, and cutting-edge tech accessories.
+                </p>
+            </div>
+
+            <!-- 5. Contact Section -->
+            <div id="section-contact" class="unshaped-card p-6 md:p-8 hidden space-y-4 text-center">
+                <h2 class="text-2xl font-black font-brand text-gray-900">Get in Touch</h2>
+                <p class="text-xs text-gray-500 max-w-md mx-auto">Have questions about your gadget order or shipping? Reach out to us directly!</p>
+                <div class="py-6">
+                    <a href="mailto:sumitiitan58@gmail.com" class="inline-block px-8 py-4 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-black text-xs uppercase tracking-widest rounded-full shadow-lg shadow-indigo-200 hover:scale-105 transition">
+                        ✉️ Email Us at sumitiitan58@gmail.com
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Return Modal -->
+    <div id="return-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-indigo-100">
+            <h3 class="font-black text-lg text-gray-900 font-brand">Request Product Return</h3>
+            <p class="text-xs text-gray-500">Please provide a valid reason for returning this item.</p>
+            <input type="hidden" id="return-order-id">
+            <textarea id="return-reason" placeholder="Enter reason..." rows="4" class="w-full p-3 rounded-xl border border-indigo-200 text-xs focus:outline-none focus:border-indigo-500"></textarea>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeReturnModal()" class="px-4 py-2 bg-gray-200 font-bold text-xs rounded-xl">Cancel</button>
+                <button onclick="submitReturnRequest()" class="px-4 py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Script Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, getDocsFromCache } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
+            authDomain: "auragadgets-c3a7c.firebaseapp.com",
+            projectId: "auragadgets-c3a7c",
+            storageBucket: "auragadgets-c3a7c.firebasestorage.app",
+            messagingSenderId: "119527057995",
+            appId: "1:119527057995:web:5f3b2173af91861d1cbbce",
+            measurementId: "G-54CD81QGGR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadUserProfile();
+            loadUserAddresses();
+            loadUserOrders();
+        });
+
+        window.switchTab = function(tabName) {
+            ['profile', 'addresses', 'orders', 'about', 'contact'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                document.getElementById(`btn-${t}`).className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition";
+            });
+            document.getElementById(`section-${tabName}`).classList.remove('hidden');
+            document.getElementById(`btn-${tabName}`).className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md";
+        }
+
+        window.saveProfile = function(e) {
+            e.preventDefault();
+            let profile = {
+                name: document.getElementById('prof-name').value,
+                phone: document.getElementById('prof-phone').value
+            };
+            localStorage.setItem('aura_user_profile', JSON.stringify(profile));
+            alert('Profile saved successfully! 💾');
+        }
+
+        function loadUserProfile() {
+            let saved = JSON.parse(localStorage.getItem('aura_user_profile'));
+            if (saved) {
+                document.getElementById('prof-name').value = saved.name || '';
+                document.getElementById('prof-phone').value = saved.phone || '';
+            }
+        }
+
+        window.toggleAddressForm = function() {
+            document.getElementById('new-address-box').classList.toggle('hidden');
+        }
+
+        window.saveNewAddress = function(e) {
+            e.preventDefault();
+            let newAddr = {
+                name: document.getElementById('addr-name').value,
+                phone: document.getElementById('addr-phone').value,
+                street: document.getElementById('addr-street').value,
+                locality: document.getElementById('addr-locality').value,
+                city: document.getElementById('addr-city').value,
+                pin: document.getElementById('addr-pin').value
+            };
+            let addresses = JSON.parse(localStorage.getItem('aura_user_addresses')) || [];
+            addresses.push(newAddr);
+            localStorage.setItem('aura_user_addresses', JSON.stringify(addresses));
+            toggleAddressForm();
+            loadUserAddresses();
+            alert('Address added successfully! 📍');
+        }
+
+        function loadUserAddresses() {
+            let addresses = JSON.parse(localStorage.getItem('aura_user_addresses')) || [];
+            let container = document.getElementById('addresses-list');
+            container.innerHTML = '';
+            if (addresses.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">No saved addresses found. Add one above.</p>`;
+                return;
+            }
+            addresses.forEach((addr, idx) => {
+                container.innerHTML += `
+                    <div class="p-4 rounded-2xl border border-indigo-100 bg-white/60 flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900">${addr.name} (${addr.phone})</h4>
+                            <p class="text-xs text-gray-600 mt-1">${addr.street}, ${addr.locality}, ${addr.city} - ${addr.pin}</p>
+                        </div>
+                        <button onclick="deleteAddress(${idx})" class="text-red-500 font-bold text-xs hover:underline">Delete</button>
+                    </div>
+                `;
+            });
+        }
+
+        window.deleteAddress = function(idx) {
+            let addresses = JSON.parse(localStorage.getItem('aura_user_addresses')) || [];
+            addresses.splice(idx, 1);
+            localStorage.setItem('aura_user_addresses', JSON.stringify(addresses));
+            loadUserAddresses();
+        }
+
+        // Robust Fetch Orders with fallback mechanism
+        async function loadUserOrders() {
+            let container = document.getElementById('orders-container');
+            container.innerHTML = `<p class="text-xs text-gray-400">Loading your device orders...</p>`;
+            
+            let deviceId = localStorage.getItem('aura_device_id');
+            let orders = [];
+
+            try {
+                if (deviceId) {
+                    try {
+                        const q = query(collection(db, "orders"), where("deviceId", "==", deviceId));
+                        const querySnapshot = await getDocs(q);
+                        querySnapshot.forEach((docSnap) => {
+                            orders.push({ id: docSnap.id, ...docSnap.data() });
+                        });
+                    } catch (indexErr) {
+                        console.warn("Index warning or query failed, fetching all orders as fallback:", indexErr);
+                    }
+                }
+
+                // Fallback: If no orders found via deviceId filter, pull all orders and match locally
+                if (orders.length === 0) {
+                    const allSnapshot = await getDocs(collection(db, "orders"));
+                    allSnapshot.forEach((docSnap) => {
+                        let data = docSnap.data();
+                        // Match either deviceId or user's phone number from profile if available
+                        let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
+                        if ((deviceId && data.deviceId === deviceId) || (userProf.phone && data.customerPhone === userProf.phone)) {
+                            orders.push({ id: docSnap.id, ...data });
+                        }
+                    });
+                }
+
+                container.innerHTML = '';
+                if (orders.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">No orders found on this device. Start shopping!</p>`;
+                    return;
+                }
+
+                orders.forEach(order => {
+                    container.innerHTML += `
+                        <div class="p-5 rounded-2xl border border-indigo-100 bg-white/70 space-y-3">
+                            <div class="flex justify-between items-center border-b border-indigo-50 pb-3">
+                                <div>
+                                    <span class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full uppercase">Order ID: ${order.id.slice(0,8)}</span>
+                                    <p class="text-[11px] text-gray-400 mt-1">Customer: ${order.customerName || 'N/A'} (${order.customerPhone || 'N/A'})</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-3 py-1 bg-pink-100 text-pink-700 font-black text-xs rounded-full uppercase">${order.status || 'Dispatched'}</span>
+                                    <p class="text-xs font-bold text-gray-900 mt-1">Total: ${order.total || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-600">
+                                <p class="font-bold mb-1">Items / Details:</p>
+                                <p>${order.itemsSummary || 'Gadget Order'}</p>
+                                <p class="text-[11px] text-gray-500 mt-1">📍 Address: ${order.shippingAddress || 'N/A'}</p>
+                            </div>
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <a href="mailto:sumitiitan58@gmail.com?subject=Support regarding Order ${order.id}" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition">💬 Chat with Support</a>
+                                <button onclick="openReturnModal('${order.id}')" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-xl hover:bg-pink-100 transition">🔄 Request Return</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p class="text-xs text-red-400">Error loading orders: ${err.message}</p>`;
+            }
+        }
+
+        window.openReturnModal = function(orderId) {
+            document.getElementById('return-order-id').value = orderId;
+            document.getElementById('return-reason').value = '';
+            document.getElementById('return-modal').classList.remove('hidden');
+        }
+
+        window.closeReturnModal = function() {
+            document.getElementById('return-modal').classList.add('hidden');
+        }
+
+        window.submitReturnRequest = async function() {
+            let orderIdInput = document.getElementById('return-order-id').value;
+            let reason = document.getElementById('return-reason').value;
+            if (!reason) {
+                alert('Please enter a return reason.');
+                return;
+            }
+            try {
+                await updateDoc(doc(db, "orders", orderIdInput), {
+                    returnRequested: true,
+                    returnReason: reason,
+                    returnStatus: 'Pending'
+                });
+                alert('Return request submitted successfully! 🔄');
+                closeReturnModal();
+                loadUserOrders();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

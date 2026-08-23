@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | AuraGadget Orders</title>
+    <title>Admin Dashboard | AuraGadget Orders & Notifications</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -11,33 +11,105 @@
         h1, h2, h3, .font-brand { font-family: 'Outfit', sans-serif; }
     </style>
 </head>
-<body class="p-6 md:p-12 max-w-7xl mx-auto">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b pb-4 gap-4">
+<body class="p-4 md:p-12 max-w-7xl mx-auto">
+    <!-- Header with Notification Bell -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
         <div>
-            <h1 class="text-3xl font-black font-brand text-gray-900">Admin Control - Orders & Returns ⚙️</h1>
-            <p class="text-xs text-gray-500">Manage user orders, update tracking statuses, and process return requests.</p>
+            <h1 class="text-2xl md:text-3xl font-black font-brand text-gray-900">Admin Control Center ⚙️</h1>
+            <p class="text-xs text-gray-500">Manage orders status, returns, live customer chats and instant notifications.</p>
         </div>
-        <a href="index.html" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl">View Store 🏠</a>
+        <div class="flex items-center gap-3">
+            <!-- Notification Bell Button -->
+            <div class="relative">
+                <button onclick="toggleNotificationsPanel()" class="relative p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-1.5 text-xs font-bold text-gray-700">
+                    🔔 Notifications <span id="notif-badge" class="bg-rose-600 text-white px-1.5 py-0.5 rounded-full text-[10px] hidden">0</span>
+                </button>
+                <!-- Notification Dropdown Panel -->
+                <div id="notif-dropdown" class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl hidden z-50 overflow-hidden">
+                    <div class="p-3 bg-rose-600 text-white text-xs font-bold flex justify-between items-center">
+                        <span>Activity Alerts</span>
+                        <span class="text-[10px] bg-rose-700 px-2 py-0.5 rounded-full">Live</span>
+                    </div>
+                    <div id="notif-list" class="max-h-72 overflow-y-auto divide-y divide-gray-100 text-xs">
+                        <div class="p-4 text-center text-gray-400 text-[11px]">No new notifications</div>
+                    </div>
+                </div>
+            </div>
+            <a href="index.html" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-300 transition">View Store 🏠</a>
+        </div>
     </div>
 
     <!-- Search Bar Section -->
-    <div class="mb-6">
+    <div class="mb-4">
         <input 
             type="text" 
             id="order-search" 
-            onkeyup="filterOrders()" 
-            placeholder="🔍 Search by Order ID, Customer Name, Phone, or Address..." 
-            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-indigo-500 shadow-sm"
+            onkeyup="applyFilters()" 
+            placeholder="🔍 Search by Order ID, Customer Name, Phone, Address, or Items..." 
+            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-rose-500 shadow-sm"
         >
     </div>
 
+    <!-- STATUS TABS FILTER -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-4 scrollbar-none">
+        <button onclick="setStatusTab('All')" id="tab-All" class="status-tab px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white shadow transition flex-shrink-0">All Orders</button>
+        <button onclick="setStatusTab('Pending')" id="tab-Pending" class="status-tab px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition flex-shrink-0">Pending ⏳</button>
+        <button onclick="setStatusTab('Dispatched')" id="tab-Dispatched" class="status-tab px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition flex-shrink-0">Dispatched 📦</button>
+        <button onclick="setStatusTab('Out for Delivery')" id="tab-Out for Delivery" class="status-tab px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition flex-shrink-0">Out for Delivery 🛵</button>
+        <button onclick="setStatusTab('Delivered')" id="tab-Delivered" class="status-tab px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition flex-shrink-0">Delivered ✅</button>
+        <button onclick="setStatusTab('Return')" id="tab-Return" class="status-tab px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition flex-shrink-0">Return Requests ⚠️</button>
+    </div>
+
+    <!-- Orders Container -->
     <div id="admin-orders-list" class="space-y-6">
         <p class="text-xs text-gray-400">Loading incoming customer orders...</p>
     </div>
 
+    <!-- DIRECT CHAT MODAL -->
+    <div id="chat-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-rose-100 w-full max-w-lg rounded-3xl shadow-2xl flex flex-col h-[550px] overflow-hidden">
+            <!-- Chat Header -->
+            <div class="p-4 bg-rose-600 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="chat-modal-title" class="font-black text-sm">Customer Support Chat</h3>
+                    <p id="chat-modal-subtitle" class="text-[10px] text-rose-100">Secure 1-to-1 Conversation</p>
+                </div>
+                <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-rose-700 hover:bg-rose-800 text-white font-bold flex items-center justify-center text-xs transition">✕</button>
+            </div>
+
+            <!-- Messages Box -->
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs">
+                <div class="text-center text-gray-400 text-[11px] py-10">Loading messages...</div>
+            </div>
+
+            <!-- Image Preview Area -->
+            <div id="image-preview-box" class="hidden px-4 py-2 bg-rose-50 border-t border-rose-100 flex items-center justify-between">
+                <span id="preview-file-name" class="text-[11px] text-rose-700 font-bold truncate max-w-[200px]">Image selected</span>
+                <button onclick="clearImageSelection()" class="text-red-500 font-bold text-xs">Remove ✕</button>
+            </div>
+
+            <!-- Chat Input Footer -->
+            <div class="p-3 bg-white border-t border-gray-100 flex items-center gap-2">
+                <label class="cursor-pointer p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition flex items-center justify-center" title="Attach Image">
+                    📷
+                    <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleImageSelection(event)">
+                </label>
+                <input 
+                    type="text" 
+                    id="chat-input-msg" 
+                    placeholder="Type your message..." 
+                    onkeypress="if(event.key === 'Enter') sendChatMessage()"
+                    class="flex-1 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-rose-500"
+                >
+                <button onclick="sendChatMessage()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow transition">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE & ADMIN SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
@@ -52,7 +124,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let allOrders = []; // Global variable to store fetched orders for filtering
+        let allOrders = [];
+        let currentStatusFilter = 'All';
+        let activeChatOrderId = null;
+        let activeChatUnsubscribe = null;
+        let selectedImageBase64 = null;
+        let notificationsList = [];
 
         document.addEventListener("DOMContentLoaded", async function() {
             loadAdminOrders();
@@ -63,15 +140,123 @@
             try {
                 const querySnapshot = await getDocs(collection(db, "orders"));
                 allOrders = [];
+                notificationsList = [];
+
                 querySnapshot.forEach((docSnap) => {
-                    allOrders.push({ id: docSnap.id, ...docSnap.data() });
+                    let data = docSnap.id ? { id: docSnap.id, ...docSnap.data() } : null;
+                    if(data) {
+                        allOrders.push(data);
+
+                        // Generate automated activity notifications based on order state
+                        if (!data.status || data.status === 'Pending') {
+                            notificationsList.push({
+                                type: 'order',
+                                title: `New Order: #${data.id.slice(-6)}`,
+                                desc: `${data.customerName || 'Customer'} placed an order worth ${data.total}`,
+                                targetId: data.id
+                            });
+                        }
+                        if (data.returnRequested && data.returnStatus !== 'Accepted' && data.returnStatus !== 'Rejected') {
+                            notificationsList.push({
+                                type: 'return',
+                                title: `Return Request: #${data.id.slice(-6)}`,
+                                desc: `Reason: ${data.returnReason}`,
+                                targetId: data.id
+                            });
+                        }
+                    }
                 });
 
-                displayOrders(allOrders);
+                renderNotifications();
+                applyFilters();
             } catch (err) {
                 console.error(err);
                 container.innerHTML = `<p class="text-xs text-red-500">Error loading orders: ${err.message}</p>`;
             }
+        }
+
+        function renderNotifications() {
+            let badge = document.getElementById('notif-badge');
+            let listContainer = document.getElementById('notif-list');
+            
+            if (notificationsList.length > 0) {
+                badge.textContent = notificationsList.length;
+                badge.classList.remove('hidden');
+                
+                listContainer.innerHTML = '';
+                notificationsList.forEach(notif => {
+                    listContainer.innerHTML += `
+                        <div onclick="focusOrder('${notif.targetId}')" class="p-3 hover:bg-rose-50 cursor-pointer transition">
+                            <p class="font-bold text-gray-800">${notif.title}</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5">${notif.desc}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                badge.classList.add('hidden');
+                listContainer.innerHTML = `<div class="p-4 text-center text-gray-400 text-[11px]">No new notifications</div>`;
+            }
+        }
+
+        window.toggleNotificationsPanel = function() {
+            let dropdown = document.getElementById('notif-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.focusOrder = function(orderId) {
+            toggleNotificationsPanel();
+            document.getElementById('order-search').value = orderId;
+            applyFilters();
+        }
+
+        window.setStatusTab = function(status) {
+            currentStatusFilter = status;
+            
+            // Update Tab Active Styling
+            document.querySelectorAll('.status-tab').forEach(tab => {
+                tab.classList.remove('bg-rose-600', 'text-white', 'shadow');
+                tab.classList.add('bg-white', 'border', 'border-gray-200', 'text-gray-700');
+            });
+            let activeTab = document.getElementById(`tab-${status}`);
+            if(activeTab) {
+                activeTab.classList.remove('bg-white', 'border', 'border-gray-200', 'text-gray-700');
+                activeTab.classList.add('bg-rose-600', 'text-white', 'shadow');
+            }
+
+            applyFilters();
+        }
+
+        window.applyFilters = function() {
+            let searchQuery = document.getElementById('order-search').value.toLowerCase();
+            
+            let filtered = allOrders.filter(order => {
+                let matchesTab = true;
+                let currentOrderStatus = order.status || 'Pending';
+
+                if (currentStatusFilter === 'Pending') {
+                    matchesTab = (currentOrderStatus === 'Pending' || !order.status);
+                } else if (currentStatusFilter === 'Dispatched') {
+                    matchesTab = (currentOrderStatus === 'Dispatched');
+                } else if (currentStatusFilter === 'Out for Delivery') {
+                    matchesTab = (currentOrderStatus === 'Out for Delivery');
+                } else if (currentStatusFilter === 'Delivered') {
+                    matchesTab = (currentOrderStatus === 'Delivered');
+                } else if (currentStatusFilter === 'Return') {
+                    matchesTab = (order.returnRequested === true);
+                }
+
+                let idMatch = order.id.toLowerCase().includes(searchQuery);
+                let nameMatch = (order.customerName || '').toLowerCase().includes(searchQuery);
+                let phoneMatch = (order.customerPhone || '').toLowerCase().includes(searchQuery);
+                let addressMatch = (order.shippingAddress || '').toLowerCase().includes(searchQuery);
+                let itemsMatch = (order.itemsSummary || '').toLowerCase().includes(searchQuery);
+
+                let matchesSearch = idMatch || nameMatch || phoneMatch || addressMatch || itemsMatch;
+
+                return matchesTab && matchesSearch;
+            });
+
+            displayOrders(filtered);
         }
 
         function displayOrders(ordersToDisplay) {
@@ -79,37 +264,40 @@
             container.innerHTML = '';
             
             if (ordersToDisplay.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400">No matching orders found.</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-10 bg-white rounded-3xl border border-gray-200">No orders found for this category.</p>`;
                 return;
             }
 
             ordersToDisplay.forEach(order => {
+                let statusVal = order.status || 'Pending';
                 container.innerHTML += `
                     <div class="order-card bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
                         <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
                             <div>
-                                <span class="text-xs font-bold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">Order ID: ${order.id}</span>
-                                <p class="text-xs text-gray-500 mt-1">Customer: ${order.customerName || 'N/A'} (${order.customerPhone || 'N/A'})</p>
-                                <p class="text-[11px] text-gray-400 mt-0.5">📍 Address: ${order.shippingAddress || 'N/A'}</p>
+                                <span class="text-xs font-bold bg-rose-50 text-rose-700 px-3 py-1 rounded-full">Order ID: ${order.id}</span>
+                                <p class="text-xs text-gray-700 font-bold mt-1.5">Customer: ${order.customerName || 'N/A'} (${order.customerPhone || 'N/A'})</p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">📍 Address: ${order.shippingAddress || 'N/A'}</p>
                             </div>
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <select id="status-${order.id}" class="px-3 py-2 border rounded-xl text-xs font-bold bg-gray-50">
-                                    <option value="Dispatched" ${order.status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
-                                    <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
-                                    <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                                    <option value="Pending" ${statusVal === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Dispatched" ${statusVal === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
+                                    <option value="Out for Delivery" ${statusVal === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
+                                    <option value="Delivered" ${statusVal === 'Delivered' ? 'selected' : ''}>Delivered</option>
                                 </select>
-                                <button onclick="updateStatus('${order.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow">Update Status</button>
+                                <button onclick="updateStatus('${order.id}')" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow transition">Update</button>
+                                <button onclick="openChat('${order.id}', '${order.customerName || 'Customer'}')" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1">💬 Chat</button>
                             </div>
                         </div>
                         <div class="text-xs text-gray-700">
                             <p class="font-bold mb-1">Purchased Items:</p>
-                            <p>${order.itemsSummary || 'Gadget Order'}</p>
-                            <p class="mt-2 font-black text-sm text-pink-600">Total Amount: ${order.total}</p>
+                            <p class="bg-slate-50 p-3 rounded-xl border border-slate-100">${order.itemsSummary || 'Gadget Order'}</p>
+                            <p class="mt-2 font-black text-sm text-rose-600">Total Amount: ${order.total}</p>
                         </div>
                         ${order.returnRequested ? `
-                            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex justify-between items-center">
+                            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <div>
-                                    <p class="text-xs font-bold text-amber-900">⚠️ Return Requested Reason: ${order.returnReason}</p>
+                                    <p class="text-xs font-bold text-amber-900">⚠️ Return Reason: ${order.returnReason}</p>
                                     <p class="text-[10px] text-amber-700 mt-0.5">Status: ${order.returnStatus || 'Pending'}</p>
                                 </div>
                                 <div class="flex gap-2">
@@ -121,23 +309,6 @@
                     </div>
                 `;
             });
-        }
-
-        // Real-time search filter function
-        window.filterOrders = function() {
-            let searchQuery = document.getElementById('order-search').value.toLowerCase();
-            
-            let filtered = allOrders.filter(order => {
-                let idMatch = order.id.toLowerCase().includes(searchQuery);
-                let nameMatch = (order.customerName || '').toLowerCase().includes(searchQuery);
-                let phoneMatch = (order.customerPhone || '').toLowerCase().includes(searchQuery);
-                let addressMatch = (order.shippingAddress || '').toLowerCase().includes(searchQuery);
-                let itemsMatch = (order.itemsSummary || '').toLowerCase().includes(searchQuery);
-
-                return idMatch || nameMatch || phoneMatch || addressMatch || itemsMatch;
-            });
-
-            displayOrders(filtered);
         }
 
         window.updateStatus = async function(orderId) {
@@ -158,6 +329,107 @@
                 loadAdminOrders();
             } catch (err) {
                 alert('Error: ' + err.message);
+            }
+        }
+
+        // CHAT MODAL & MESSAGING FUNCTIONS
+        window.openChat = function(orderId, customerName) {
+            activeChatOrderId = orderId;
+            document.getElementById('chat-modal-title').textContent = `Chat with ${customerName}`;
+            document.getElementById('chat-modal-subtitle').textContent = `Order ID: ${orderId}`;
+            document.getElementById('chat-modal').classList.remove('hidden');
+            
+            loadChatMessages(orderId);
+        }
+
+        window.closeChatModal = function() {
+            document.getElementById('chat-modal').classList.add('hidden');
+            if (activeChatUnsubscribe) {
+                activeChatUnsubscribe();
+                activeChatUnsubscribe = null;
+            }
+            activeChatOrderId = null;
+            clearImageSelection();
+        }
+
+        function loadChatMessages(orderId) {
+            let container = document.getElementById('chat-messages-container');
+            container.innerHTML = `<div class="text-center text-gray-400 py-4">Connecting to secure chat...</div>`;
+
+            const msgsRef = collection(db, "orders", orderId, "messages");
+            const q = query(msgsRef, orderBy("timestamp", "asc"));
+
+            if (activeChatUnsubscribe) activeChatUnsubscribe();
+
+            activeChatUnsubscribe = onSnapshot(q, (snapshot) => {
+                container.innerHTML = '';
+                if (snapshot.empty) {
+                    container.innerHTML = `<p class="text-center text-gray-400 text-[11px] py-10">No messages yet. Send a message to start conversation!</p>`;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    let msg = docSnap.data();
+                    let isAdmin = msg.sender === 'admin';
+                    let bubbleAlign = isAdmin ? 'ml-auto bg-rose-600 text-white' : 'mr-auto bg-white text-slate-800 border border-slate-200';
+                    let imageHtml = msg.imageUrl ? `<img src="${msg.imageUrl}" class="w-40 h-40 object-cover rounded-lg mt-2 cursor-pointer" onclick="window.open('${msg.imageUrl}')">` : '';
+
+                    container.innerHTML += `
+                        <div class="flex flex-col ${isAdmin ? 'items-end' : 'items-start'} max-w-[80%] ${isAdmin ? 'ml-auto' : 'mr-auto'}">
+                            <span class="text-[9px] text-gray-400 mb-0.5">${isAdmin ? 'You (Admin)' : 'Customer'}</span>
+                            <div class="p-3 rounded-2xl text-xs shadow-sm ${bubbleAlign}">
+                                ${msg.text ? `<p class="leading-relaxed">${msg.text}</p>` : ''}
+                                ${imageHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        window.handleImageSelection = function(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result;
+                document.getElementById('preview-file-name').textContent = file.name;
+                document.getElementById('image-preview-box').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.clearImageSelection = function() {
+            selectedImageBase64 = null;
+            document.getElementById('chat-image-input').value = '';
+            document.getElementById('image-preview-box').classList.add('hidden');
+        }
+
+        window.sendChatMessage = async function() {
+            let inputField = document.getElementById('chat-input-msg');
+            let text = inputField.value.trim();
+
+            if (!text && !selectedImageBase64) return;
+            if (!activeChatOrderId) return;
+
+            let msgData = {
+                text: text,
+                sender: 'admin',
+                timestamp: serverTimestamp()
+            };
+
+            if (selectedImageBase64) {
+                msgData.imageUrl = selectedImageBase64;
+            }
+
+            try {
+                inputField.value = '';
+                clearImageSelection();
+                await addDoc(collection(db, "orders", activeChatOrderId, "messages"), msgData);
+            } catch (err) {
+                alert('Failed to send message: ' + err.message);
             }
         }
     </script>

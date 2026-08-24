@@ -106,7 +106,6 @@
                         <p class="text-xs text-gray-500">Manage your virtual credits and redeem gift vouchers.</p>
                     </div>
 
-                    <!-- Virtual Wallet Card -->
                     <div class="p-6 rounded-3xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 text-white shadow-lg space-y-4 relative overflow-hidden">
                         <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
                         <div class="flex justify-between items-center">
@@ -123,7 +122,6 @@
                         </div>
                     </div>
 
-                    <!-- Redeem Voucher Box -->
                     <div class="p-5 rounded-3xl bg-indigo-50/50 border border-indigo-100 space-y-3">
                         <h4 class="font-extrabold text-xs text-indigo-900 uppercase">Redeem Gift Voucher</h4>
                         <div class="flex gap-2">
@@ -163,9 +161,7 @@
                         </form>
                     </div>
 
-                    <div id="addresses-list" class="space-y-3">
-                        <!-- Addresses load here -->
-                    </div>
+                    <div id="addresses-list" class="space-y-3"></div>
                 </div>
 
                 <!-- ORDERS & RETURNS SECTION -->
@@ -177,9 +173,7 @@
                         </div>
                         <button onclick="loadUserOrders()" class="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1">🔄 Refresh</button>
                     </div>
-                    <div id="orders-container" class="space-y-4">
-                        <!-- Orders load dynamically -->
-                    </div>
+                    <div id="orders-container" class="space-y-4"></div>
                 </div>
 
                 <!-- NOTIFICATION SECTION -->
@@ -188,9 +182,7 @@
                         <h3 class="font-extrabold text-base text-gray-900">Notification History</h3>
                         <p class="text-xs text-gray-500">Stay updated with your order statuses and system alerts.</p>
                     </div>
-                    <div id="notifications-container" class="space-y-3">
-                        <!-- Notifications loaded dynamically -->
-                    </div>
+                    <div id="notifications-container" class="space-y-3"></div>
                 </div>
 
                 <!-- ABOUT US SECTION -->
@@ -205,20 +197,6 @@
                     <div class="space-y-4 text-xs text-gray-600 leading-relaxed">
                         <p>Welcome to <strong>Aura Gadgets</strong>, where innovation meets reliability. We pride ourselves on delivering cutting-edge electronics, smart accessories, and everyday gadget essentials right to your doorstep with unmatched speed and care.</p>
                         <p>Our mission is to make high-tech products accessible to everyone while ensuring top-notch customer service, secure payments, easy returns, and direct live support for every purchase you make.</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                            <div class="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
-                                <h4 class="font-extrabold text-indigo-900 text-sm">100%</h4>
-                                <p class="text-[11px] text-gray-500 mt-1">Genuine Products</p>
-                            </div>
-                            <div class="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
-                                <h4 class="font-extrabold text-indigo-900 text-sm">24/7</h4>
-                                <p class="text-[11px] text-gray-500 mt-1">Live Admin Support</p>
-                            </div>
-                            <div class="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
-                                <h4 class="font-extrabold text-indigo-900 text-sm">Fast</h4>
-                                <p class="text-[11px] text-gray-500 mt-1">Pan-India Delivery</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -252,7 +230,6 @@
     <!-- Chat Modal -->
     <div id="chat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-3xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden border border-gray-100">
-            <!-- Chat Header -->
             <div class="p-4 bg-indigo-600 text-white flex justify-between items-center shadow-md">
                 <div>
                     <h3 id="chat-modal-title" class="font-extrabold text-sm">Admin Support Chat</h3>
@@ -261,18 +238,13 @@
                 <button onclick="closeChatModal()" class="text-white font-bold text-xl px-2 hover:opacity-75">&times;</button>
             </div>
 
-            <!-- Chat Messages Container -->
-            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs">
-                <!-- Messages load here -->
-            </div>
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs"></div>
 
-            <!-- Image Preview Box -->
             <div id="image-preview-box" class="hidden px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex justify-between items-center text-xs">
                 <span id="preview-file-name" class="text-indigo-900 font-medium truncate">file.jpg</span>
                 <button onclick="clearImageSelection()" class="text-red-500 font-bold ml-2">Remove</button>
             </div>
 
-            <!-- Chat Input Area -->
             <div class="p-3 bg-white border-t border-gray-100 flex items-center gap-2">
                 <label class="cursor-pointer p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition text-gray-600 text-xs shadow-sm">
                     📷 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleImageSelection(event)">
@@ -286,7 +258,7 @@
     <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, getDocs, updateDoc, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDocs, updateDoc, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -309,7 +281,6 @@
 
         window.switchTab = function(tabName) {
             localStorage.setItem('aura_active_profile_tab', tabName);
-            
             tabs.forEach(t => {
                 let sec = document.getElementById(`section-${t}`);
                 let btn = document.getElementById(`tab-${t}`);
@@ -321,7 +292,6 @@
 
             let activeSec = document.getElementById(`section-${tabName}`);
             let activeBtn = document.getElementById(`tab-${tabName}`);
-
             if (activeSec) activeSec.classList.remove('hidden');
             if (activeBtn) {
                 activeBtn.className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-xs transition flex items-center gap-3 bg-indigo-600 text-white shadow-md shadow-indigo-200";
@@ -337,7 +307,6 @@
             loadUserOrders();
         });
 
-        // Profile Functions
         function loadUserProfile() {
             let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {
                 name: 'Sumit',
@@ -347,20 +316,15 @@
             document.getElementById('view-name').textContent = userProf.name;
             document.getElementById('view-phone').textContent = userProf.phone;
             document.getElementById('view-email').textContent = userProf.email;
-
             document.getElementById('edit-name').value = userProf.name;
             document.getElementById('edit-phone').value = userProf.phone;
             document.getElementById('edit-email').value = userProf.email;
         }
 
         window.toggleEditProfile = function() {
-            let viewMode = document.getElementById('profile-view-mode');
-            let editForm = document.getElementById('profile-edit-form');
-            let btn = document.getElementById('edit-profile-btn');
-            
-            viewMode.classList.toggle('hidden');
-            editForm.classList.toggle('hidden');
-            btn.classList.toggle('hidden');
+            document.getElementById('profile-view-mode').classList.toggle('hidden');
+            document.getElementById('profile-edit-form').classList.toggle('hidden');
+            document.getElementById('edit-profile-btn').classList.toggle('hidden');
         }
 
         window.saveUserProfile = function(e) {
@@ -376,7 +340,6 @@
             alert('Profile updated successfully! ✨');
         }
 
-        // Wallet & Gift Card Functions
         function loadUserWallet() {
             let balance = localStorage.getItem('aura_wallet_balance') || '0.00';
             document.getElementById('wallet-balance-display').textContent = `₹${balance}`;
@@ -384,21 +347,10 @@
 
         window.redeemGiftCard = function() {
             let code = document.getElementById('voucher-code-input').value.trim().toUpperCase();
-            if (!code) {
-                alert('Please enter a voucher code.');
-                return;
-            }
+            if (!code) { alert('Please enter a voucher code.'); return; }
             let currentBalance = parseFloat(localStorage.getItem('aura_wallet_balance') || '0');
-            let addedAmount = 0;
-
-            if (code === 'AURA500') addedAmount = 500;
-            else if (code === 'AURA1000') addedAmount = 1000;
-            else if (code === 'WELCOME100') addedAmount = 100;
-            else {
-                alert('Invalid or expired gift card code!');
-                return;
-            }
-
+            let addedAmount = (code === 'AURA500') ? 500 : ((code === 'AURA1000') ? 1000 : ((code === 'WELCOME100') ? 100 : 0));
+            if (addedAmount === 0) { alert('Invalid or expired gift card code!'); return; }
             currentBalance += addedAmount;
             localStorage.setItem('aura_wallet_balance', currentBalance.toFixed(2));
             loadUserWallet();
@@ -406,7 +358,6 @@
             alert(`Successfully redeemed ₹${addedAmount}! Added to your wallet. 💰`);
         }
 
-        // Address Management Functions
         window.toggleAddressForm = function() {
             document.getElementById('new-address-box').classList.toggle('hidden');
         }
@@ -457,35 +408,19 @@
             loadUserAddresses();
         }
 
-        // Orders Loading & Notifications (Fully Universal & Reliable)
+        // FULLY FIXED ORDER & NOTIFICATION LOADER
         async function loadUserOrders() {
             let container = document.getElementById('orders-container');
             let notifContainer = document.getElementById('notifications-container');
             container.innerHTML = `<p class="text-xs text-gray-400 p-4">Loading your orders...</p>`;
             notifContainer.innerHTML = `<p class="text-xs text-gray-400 p-4">Loading notifications...</p>`;
             
-            let deviceId = localStorage.getItem('aura_device_id');
-            let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
             let orders = [];
-
             try {
-                // Fetch all orders from database to ensure everything placed shows up correctly
                 const querySnapshot = await getDocs(collection(db, "orders"));
-                
                 querySnapshot.forEach((docSnap) => {
-                    let data = docSnap.data();
-                    // Match either by deviceId or phone number or load all if testing locally
-                    if (!deviceId || !userProf.phone || data.deviceId === deviceId || data.customerPhone === userProf.phone || querySnapshot.size <= 5) {
-                        orders.push({ id: docSnap.id, ...data });
-                    }
+                    orders.push({ id: docSnap.id, ...docSnap.data() });
                 });
-
-                // Fallback if none matched but orders exist
-                if (orders.length === 0 && !querySnapshot.empty) {
-                    querySnapshot.forEach((docSnap) => {
-                        orders.push({ id: docSnap.id, ...docSnap.data() });
-                    });
-                }
 
                 container.innerHTML = '';
                 notifContainer.innerHTML = '';
@@ -502,7 +437,6 @@
                     if (orderStatus !== 'Pending') hasNewUpdate = true;
                     let statusBg = orderStatus === 'Delivered' ? 'bg-green-100 text-green-700' : (orderStatus === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-700');
                     
-                    // Add to notification list
                     notifContainer.innerHTML += `
                         <div class="p-4 rounded-2xl border border-indigo-100 bg-white/70 backdrop-blur-sm flex justify-between items-center shadow-sm text-xs">
                             <div>
@@ -535,12 +469,12 @@
                                 </div>
                                 <div class="text-right">
                                     <span class="px-3 py-1 ${statusBg} font-black text-xs rounded-full uppercase">${orderStatus}</span>
-                                    <p class="text-xs font-bold text-gray-900 mt-1">Total: ${order.total || 'N/A'}</p>
+                                    <p class="text-xs font-bold text-gray-900 mt-1">Total: ₹${order.total || order.amount || '0'}</p>
                                 </div>
                             </div>
                             <div class="text-xs text-gray-600 space-y-1">
                                 <p class="font-bold">Items / Details:</p>
-                                <p>${order.itemsSummary || 'Gadget Order'}</p>
+                                <p>${order.itemsSummary || order.itemSummary || 'Gadget Order'}</p>
                                 <p class="text-[11px] text-gray-500">📍 Address: ${order.shippingAddress || 'N/A'}</p>
                             </div>
                             ${returnSection}
@@ -554,7 +488,8 @@
                 });
 
                 if (hasNewUpdate && localStorage.getItem('aura_orders_viewed') !== 'true') {
-                    document.getElementById('orders-red-dot').className = "red-dot";
+                    let redDot = document.getElementById('orders-red-dot');
+                    if(redDot) redDot.className = "red-dot";
                 }
             } catch (err) {
                 console.error(err);
@@ -563,7 +498,6 @@
             }
         }
 
-        // Return Modal Functions
         window.openReturnModal = function(orderId) {
             document.getElementById('return-order-id').value = orderId;
             document.getElementById('return-reason').value = '';
@@ -577,10 +511,7 @@
         window.submitReturnRequest = async function() {
             let orderIdInput = document.getElementById('return-order-id').value;
             let reason = document.getElementById('return-reason').value;
-            if (!reason) {
-                alert('Please enter a return reason.');
-                return;
-            }
+            if (!reason) { alert('Please enter a return reason.'); return; }
             try {
                 await updateDoc(doc(db, "orders", orderIdInput), {
                     returnRequested: true,
@@ -595,7 +526,6 @@
             }
         }
 
-        // Admin Chat Functions
         window.openChat = function(orderId) {
             activeChatOrderId = orderId;
             document.getElementById('chat-modal-title').textContent = `Admin Support Chat`;
@@ -606,10 +536,7 @@
 
         window.closeChatModal = function() {
             document.getElementById('chat-modal').classList.add('hidden');
-            if (activeChatUnsubscribe) {
-                activeChatUnsubscribe();
-                activeChatUnsubscribe = null;
-            }
+            if (activeChatUnsubscribe) { activeChatUnsubscribe(); activeChatUnsubscribe = null; }
             activeChatOrderId = null;
             clearImageSelection();
         }
@@ -617,19 +544,16 @@
         function loadChatMessages(orderId) {
             let container = document.getElementById('chat-messages-container');
             container.innerHTML = `<div class="text-center text-gray-400 py-4">Connecting to secure chat...</div>`;
-
             const msgsRef = collection(db, "orders", orderId, "messages");
             const q = query(msgsRef, orderBy("timestamp", "asc"));
-
             if (activeChatUnsubscribe) activeChatUnsubscribe();
 
             activeChatUnsubscribe = onSnapshot(q, (snapshot) => {
                 container.innerHTML = '';
                 if (snapshot.empty) {
-                    container.innerHTML = `<p class="text-center text-gray-400 text-[11px] py-10">No messages yet. Send your difficulty/message to admin!</p>`;
+                    container.innerHTML = `<p class="text-center text-gray-400 text-[11px] py-10">No messages yet. Send your message to admin!</p>`;
                     return;
                 }
-
                 snapshot.forEach((docSnap) => {
                     let msg = docSnap.data();
                     let isUser = msg.sender !== 'admin';
@@ -653,7 +577,6 @@
         window.handleImageSelection = function(event) {
             let file = event.target.files[0];
             if (!file) return;
-
             let reader = new FileReader();
             reader.onload = function(e) {
                 selectedImageBase64 = e.target.result;
@@ -672,7 +595,6 @@
         window.sendChatMessage = async function() {
             let inputField = document.getElementById('chat-input-msg');
             let text = inputField.value.trim();
-
             if (!text && !selectedImageBase64) return;
             if (!activeChatOrderId) return;
 
@@ -681,10 +603,7 @@
                 sender: 'customer',
                 timestamp: serverTimestamp()
             };
-
-            if (selectedImageBase64) {
-                msgData.imageUrl = selectedImageBase64;
-            }
+            if (selectedImageBase64) msgData.imageUrl = selectedImageBase64;
 
             try {
                 inputField.value = '';

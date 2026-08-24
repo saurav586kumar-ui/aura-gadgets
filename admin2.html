@@ -16,6 +16,12 @@
             border: 1px solid #e2e8f0;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         }
+        @media print {
+            body { background: white !important; }
+            body * { visibility: hidden !important; }
+            #printable-invoice, #printable-invoice * { visibility: visible !important; }
+            #printable-invoice { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; padding: 20px; background: white; z-index: 99999; }
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -24,25 +30,20 @@
     <header class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm gap-4">
         <div>
             <h1 class="text-2xl md:text-3xl font-black font-brand text-slate-900">AuraGadget Admin Dashboard ⚡</h1>
-            <p class="text-xs text-slate-500 font-medium">Manage orders, update status, track chats & transfer wallet balance.</p>
+            <p class="text-xs text-slate-500 font-medium">Manage orders, print shipping labels, chat with images & send virtual gift cards.</p>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="switchTab('orders')" id="tab-btn-orders" class="px-5 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600 text-white transition shadow-md">📦 Orders Management</button>
-            <button onclick="switchTab('chats')" id="tab-btn-chats" class="px-5 py-2.5 rounded-2xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition relative">
-                💬 Customer Chats 
-                <span id="global-unread-badge" class="absolute -top-1 -right-1 bg-pink-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black hidden">0</span>
-            </button>
+            <button onclick="loadOrders()" class="px-5 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600 text-white transition shadow-md flex items-center gap-2">🔄 Refresh Dashboard</button>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-7xl mx-auto">
+    <main class="max-w-7xl mx-auto space-y-6">
 
-        <!-- SECTION 1: ORDERS MANAGEMENT -->
-        <section id="orders-section" class="space-y-6">
+        <!-- ORDERS MANAGEMENT SECTION -->
+        <section class="space-y-6">
             <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
-                <h2 class="text-lg font-black font-brand text-slate-800">All Customer Orders (Newest First)</h2>
-                <button onclick="loadOrders()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition">🔄 Refresh Orders</button>
+                <h2 class="text-lg font-black font-brand text-slate-800">All Customer Orders & Direct Chats (Newest First)</h2>
             </div>
 
             <div class="admin-card overflow-hidden">
@@ -54,9 +55,9 @@
                                 <th class="p-4">Customer Info</th>
                                 <th class="p-4">Items Summary</th>
                                 <th class="p-4">Total & Payment</th>
-                                <th class="p-4">Coupon / Wallet</th>
                                 <th class="p-4">Status</th>
-                                <th class="p-4 text-center">Action</th>
+                                <th class="p-4 text-center">Chat & Wallet</th>
+                                <th class="p-4 text-center">Shipping Label</th>
                             </tr>
                         </thead>
                         <tbody id="admin-orders-table" class="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -67,73 +68,65 @@
             </div>
         </section>
 
-        <!-- SECTION 2: CUSTOMER CHATS & WALLET TRANSFER -->
-        <section id="chats-section" class="space-y-6 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Customer List -->
-                <div class="admin-card p-4 space-y-3 h-[70vh] flex flex-col">
-                    <h2 class="text-sm font-black font-brand text-slate-800 px-2">Customer Conversations</h2>
-                    <div id="admin-chat-users-list" class="space-y-2 overflow-y-auto flex-1 pr-1">
-                        <!-- Populated Dynamically -->
-                    </div>
-                </div>
-
-                <!-- Active Chat Window & Money Transfer -->
-                <div class="lg:col-span-2 admin-card p-4 sm:p-6 flex flex-col h-[70vh]">
-                    <div id="no-chat-selected" class="flex-1 flex flex-col items-center justify-center text-slate-400 text-center space-y-2">
-                        <span class="text-4xl">💬</span>
-                        <p class="font-bold text-xs">Select a customer from the left to view chat and send gift vouchers.</p>
-                    </div>
-
-                    <div id="active-chat-container" class="flex-1 flex flex-col hidden space-y-4">
-                        <!-- Chat Header -->
-                        <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-                            <div>
-                                <h3 id="chat-customer-name" class="font-black text-slate-900 text-sm">Customer Name</h3>
-                                <p id="chat-customer-phone" class="text-[10px] text-slate-500 font-bold">Phone: --</p>
-                            </div>
-                            <!-- Money Transfer / Gift Voucher Trigger -->
-                            <div class="flex items-center gap-2">
-                                <button onclick="openVoucherModal()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5">
-                                    🎁 Send ₹ Voucher
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Messages Box -->
-                        <div id="chat-messages-box" class="flex-1 overflow-y-auto space-y-3 p-2 bg-slate-50 rounded-2xl border border-slate-100">
-                            <!-- Messages -->
-                        </div>
-
-                        <!-- Reply Input -->
-                        <div class="flex gap-2 pt-2">
-                            <input type="text" id="admin-reply-input" placeholder="Type a reply to customer..." class="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 font-medium">
-                            <button onclick="sendAdminMessage()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow">Send 🚀</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
     </main>
 
-    <!-- MONEY TRANSFER / GIFT VOUCHER MODAL -->
+    <!-- CHAT MODAL -->
+    <div id="chat-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="admin-card max-w-lg w-full h-[82vh] flex flex-col bg-white relative overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <div>
+                    <h3 id="modal-chat-name" class="font-black text-slate-900 text-sm">Customer Chat</h3>
+                    <p id="modal-chat-phone" class="text-[10px] text-slate-500 font-bold">Phone: --</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openVoucherModalFromChat()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">🎁 Send Gift Card</button>
+                    <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 font-bold text-slate-700 flex items-center justify-center">✕</button>
+                </div>
+            </div>
+
+            <!-- Messages Box -->
+            <div id="modal-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+                <!-- Messages -->
+            </div>
+
+            <!-- Reply Footer with Image & Text Input -->
+            <div class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                <label class="cursor-pointer p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition" title="Attach Image">
+                    📷 <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleChatImageUpload(event)">
+                </label>
+                <input type="text" id="modal-chat-input" placeholder="Type a message..." class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 font-medium" onkeypress="if(event.key==='Enter') sendModalMessage()">
+                <button onclick="sendModalMessage()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow">Send 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIRTUAL GIFT CARD GENERATOR / SENDER MODAL -->
     <div id="voucher-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="admin-card max-w-sm w-full p-6 space-y-4 relative bg-white">
-            <h3 class="text-lg font-black font-brand text-slate-900">Send Gift Voucher / Wallet Balance 🎁</h3>
-            <p class="text-xs text-slate-500">Enter the amount you want to add directly to this customer's wallet balance.</p>
+            <h3 class="text-lg font-black font-brand text-slate-900">Send Virtual e-Gift Card 🎁</h3>
+            <p class="text-xs text-slate-500">Create a secure gift voucher with auto-generated code, password & validity.</p>
             
-            <div class="space-y-2">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">Amount (₹)</label>
-                <input type="number" id="voucher-amount-input" placeholder="e.g. 500" value="500" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-indigo-500">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">Amount (₹)</label>
+                    <input type="number" id="voucher-amount-input" value="500" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">Validity (Days)</label>
+                    <input type="text" id="voucher-validity-input" value="30 Days" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-indigo-500">
+                </div>
             </div>
 
             <div class="flex gap-2 pt-2">
                 <button onclick="closeVoucherModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">Cancel</button>
-                <button onclick="transferVoucherMoney()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow">Transfer Now</button>
+                <button onclick="generateAndSendGiftCard()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow">Send Gift Card 💳</button>
             </div>
         </div>
     </div>
+
+    <!-- PRINTABLE SHIPPING LABEL CONTAINER -->
+    <div id="printable-invoice" style="display:none;"></div>
 
     <!-- Firebase Script Logic -->
     <script type="module">
@@ -157,34 +150,40 @@
         let activeChatUserDocId = null;
         let activeChatUserWallet = 0;
         let unsubscribeMessages = null;
+        let allUsersMap = {};
+        let allChatsMap = {};
 
         document.addEventListener("DOMContentLoaded", function() {
-            loadOrders();
-            loadChatUsers();
+            initRealtimeListeners();
         });
 
-        window.switchTab = function(tabName) {
-            let ordersSec = document.getElementById('orders-section');
-            let chatsSec = document.getElementById('chats-section');
-            let ordBtn = document.getElementById('tab-btn-orders');
-            let chatBtn = document.getElementById('tab-btn-chats');
-
-            if (tabName === 'orders') {
-                ordersSec.classList.remove('hidden');
-                chatsSec.classList.add('hidden');
-                ordBtn.className = "px-5 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600 text-white transition shadow-md";
-                chatBtn.className = "px-5 py-2.5 rounded-2xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition relative";
+        function initRealtimeListeners() {
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                allUsersMap = {};
+                snapshot.forEach(docSnap => {
+                    let data = docSnap.data();
+                    if(data.deviceId) {
+                        allUsersMap[data.deviceId] = { docId: docSnap.id, ...data };
+                    }
+                });
                 loadOrders();
-            } else {
-                ordersSec.classList.add('hidden');
-                chatsSec.classList.remove('hidden');
-                chatBtn.className = "px-5 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600 text-white transition shadow-md";
-                ordBtn.className = "px-5 py-2.5 rounded-2xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition relative";
-                loadChatUsers();
-            }
+            }, (error) => console.error("Users snapshot error:", error));
+
+            onSnapshot(collection(db, "chats"), (snapshot) => {
+                allChatsMap = {};
+                snapshot.forEach(docSnap => {
+                    let msg = docSnap.data();
+                    if(msg.deviceId) {
+                        if(!allChatsMap[msg.deviceId]) {
+                            allChatsMap[msg.deviceId] = [];
+                        }
+                        allChatsMap[msg.deviceId].push(msg);
+                    }
+                });
+                loadOrders();
+            }, (error) => console.error("Chats snapshot error:", error));
         }
 
-        // 1. Load Orders sorted by Date & Time (Newest First)
         window.loadOrders = async function() {
             let tbody = document.getElementById('admin-orders-table');
             tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading orders...</td></tr>`;
@@ -196,7 +195,6 @@
                     orders.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // Sort orders by timestamp (Newest first)
                 orders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
                 tbody.innerHTML = '';
@@ -207,7 +205,23 @@
 
                 orders.forEach(order => {
                     let formattedDate = order.timestamp ? new Date(order.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
-                    
+                    let deviceId = order.deviceId || '';
+                    let userData = allUsersMap[deviceId] || {};
+                    let unreadCount = userData.unreadAdminCount || 0;
+
+                    let chatsList = allChatsMap[deviceId] || [];
+                    let lastMsgText = "No messages yet";
+                    let lastMsgTime = "";
+                    if(chatsList.length > 0) {
+                        chatsList.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+                        let last = chatsList[chatsList.length - 1];
+                        lastMsgText = (last.sender === 'admin' ? 'You: ' : '') + (last.type === 'giftcard' ? '🎁 [Gift Card]' : (last.image ? '📷 [Image]' : last.text));
+                        lastMsgTime = last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                    }
+
+                    // Escape order object safely for inline onclick
+                    let orderJson = JSON.stringify(order).replace(/"/g, '&quot;');
+
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50 transition border-b border-slate-100">
                             <td class="p-4 font-bold text-slate-600 whitespace-nowrap">${formattedDate}</td>
@@ -221,10 +235,6 @@
                                 <p class="font-black text-slate-900">${order.total}</p>
                                 <span class="px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-bold text-slate-600">${order.paymentMethod || 'COD'}</span>
                             </td>
-                            <td class="p-4 text-[11px] whitespace-nowrap">
-                                <p class="text-indigo-600 font-bold">🏷️ ${order.couponApplied || 'None'}</p>
-                                <p class="text-emerald-600 font-bold">💰 Wallet: -₹${order.walletUsed || 0}</p>
-                            </td>
                             <td class="p-4 whitespace-nowrap">
                                 <select onchange="updateOrderStatus('${order.id}', this.value)" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none focus:border-indigo-500">
                                     <option value="Dispatched" ${order.status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
@@ -235,7 +245,17 @@
                                 </select>
                             </td>
                             <td class="p-4 text-center whitespace-nowrap">
-                                <button onclick="deleteOrder('${order.id}')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] rounded-xl transition">Delete</button>
+                                <button onclick="openChatModal('${deviceId}', '${userData.docId || ''}', '${order.customerName || 'Customer'}', '${order.customerPhone || 'N/A'}', ${userData.walletBalance || 0})" 
+                                    class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition relative flex items-center gap-1.5 mx-auto">
+                                    💬 Chat
+                                    ${unreadCount > 0 ? `<span class="absolute -top-1.5 -right-1.5 bg-pink-500 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full animate-pulse shadow">${unreadCount}</span>` : ''}
+                                </button>
+                                <p class="text-[9px] text-slate-400 mt-1 max-w-[120px] truncate" title="${lastMsgText}">${lastMsgTime ? '['+lastMsgTime+'] ' : ''}${lastMsgText}</p>
+                            </td>
+                            <td class="p-4 text-center whitespace-nowrap">
+                                <button onclick='printShippingLabel(${orderJson})' class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow flex items-center gap-1.5 mx-auto">
+                                    🖨️ Label
+                                </button>
                             </td>
                         </tr>
                     `;
@@ -248,92 +268,37 @@
         window.updateOrderStatus = async function(orderId, newStatus) {
             try {
                 await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-                alert('Order status updated successfully to ' + newStatus);
+                alert('Order status updated to ' + newStatus);
             } catch (err) {
                 alert('Error updating status: ' + err.message);
             }
         }
 
-        window.deleteOrder = async function(orderId) {
-            if (!confirm('Are you sure you want to delete this order?')) return;
-            try {
-                // Since deleteDoc needs to be imported if used, or we can use update/delete. Let's use deleteDoc from Firestore if needed, or reload.
-                alert('Order deletion feature ready.');
-            } catch (err) {
-                alert('Error: ' + err.message);
+        // Chat Modal Logic
+        window.openChatModal = async function(deviceId, userDocId, name, phone, walletBalance) {
+            if (!deviceId) {
+                alert('Device ID not found for this customer.');
+                return;
             }
-        }
-
-        // 2. Load Chat Users with Unread Red Dot Badges
-        window.loadChatUsers = async function() {
-            let container = document.getElementById('admin-chat-users-list');
-            container.innerHTML = `<p class="p-4 text-xs text-slate-400 text-center">Loading users...</p>`;
-
-            try {
-                const querySnapshot = await getDocs(collection(db, "users"));
-                let users = [];
-                querySnapshot.forEach((docSnap) => {
-                    users.push({ id: docSnap.id, ...docSnap.data() });
-                });
-
-                container.innerHTML = '';
-                let totalUnreadGlobal = 0;
-
-                if (users.length === 0) {
-                    container.innerHTML = `<p class="p-4 text-xs text-slate-400 text-center">No customer chats found.</p>`;
-                    return;
-                }
-
-                users.forEach(user => {
-                    let unreadCount = user.unreadAdminCount || 0;
-                    totalUnreadGlobal += unreadCount;
-
-                    container.innerHTML += `
-                        <div onclick="selectChatCustomer('${user.deviceId}', '${user.id}', '${user.name || 'Customer'}', '${user.phone || 'N/A'}', ${user.walletBalance || 0})" 
-                             class="p-3 rounded-2xl border border-slate-100 hover:border-indigo-300 bg-slate-50/50 hover:bg-white cursor-pointer transition flex items-center justify-between">
-                            <div>
-                                <p class="font-black text-slate-900 text-xs">${user.name || 'Customer (' + user.deviceId.substring(0, 6) + ')'}</p>
-                                <p class="text-[10px] text-slate-500">Wallet: ₹${user.walletBalance || 0}</p>
-                            </div>
-                            ${unreadCount > 0 ? `<span class="bg-pink-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-pulse">${unreadCount} unread</span>` : ''}
-                        </div>
-                    `;
-                });
-
-                let globalBadge = document.getElementById('global-unread-badge');
-                if (totalUnreadGlobal > 0) {
-                    globalBadge.textContent = totalUnreadGlobal;
-                    globalBadge.classList.remove('hidden');
-                } else {
-                    globalBadge.classList.add('hidden');
-                }
-            } catch (err) {
-                console.error("Error loading chat users:", err);
-            }
-        }
-
-        window.selectChatCustomer = async function(deviceId, userDocId, name, phone, walletBalance) {
             activeChatDeviceId = deviceId;
             activeChatUserDocId = userDocId;
             activeChatUserWallet = walletBalance;
 
-            document.getElementById('no-chat-selected').classList.add('hidden');
-            document.getElementById('active-chat-container').classList.remove('hidden');
-            document.getElementById('chat-customer-name').textContent = name;
-            document.getElementById('chat-customer-phone').textContent = 'Phone: ' + phone + ' | Wallet: ₹' + walletBalance;
+            document.getElementById('modal-chat-name').textContent = name;
+            document.getElementById('modal-chat-phone').textContent = 'Phone: ' + phone + ' | Wallet: ₹' + walletBalance;
+            document.getElementById('chat-modal').classList.remove('hidden');
 
-            // Reset unread count for this user in Firestore
-            try {
-                await updateDoc(doc(db, "users", userDocId), { unreadAdminCount: 0 });
-                loadChatUsers(); // Refresh sidebar badges
-            } catch(e) {}
+            if (userDocId) {
+                try {
+                    await updateDoc(doc(db, "users", userDocId), { unreadAdminCount: 0 });
+                } catch(e) {}
+            }
 
-            // Listen to messages
             if (unsubscribeMessages) unsubscribeMessages();
 
             const q = query(collection(db, "chats"), orderBy("timestamp", "asc"));
             unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                let msgBox = document.getElementById('chat-messages-box');
+                let msgBox = document.getElementById('modal-chat-messages');
                 msgBox.innerHTML = '';
                 let count = 0;
 
@@ -342,26 +307,65 @@
                     if (msg.deviceId === deviceId) {
                         count++;
                         let isSenderAdmin = msg.sender === 'admin';
-                        msgBox.innerHTML += `
-                            <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
-                                <div class="max-w-[75%] p-3 rounded-2xl text-xs font-medium ${isSenderAdmin ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'}">
-                                    <p>${msg.text}</p>
-                                    <span class="text-[9px] opacity-70 block mt-1 text-right">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        let timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                        if (msg.type === 'giftcard') {
+                            msgBox.innerHTML += `
+                                <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
+                                    <div class="max-w-[85%] bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-lg border border-indigo-500/30 text-xs space-y-2">
+                                        <div class="flex justify-between items-center border-b border-indigo-700/50 pb-2">
+                                            <span class="font-black text-amber-400 tracking-wider">🎁 AURA E-GIFT CARD</span>
+                                            <span class="text-sm font-black text-emerald-400">₹${msg.amount}</span>
+                                        </div>
+                                        <div class="bg-black/40 p-2.5 rounded-xl font-mono space-y-1">
+                                            <p class="text-[10px] text-slate-300">Card No: <span class="text-white font-bold">${msg.cardNo}</span></p>
+                                            <p class="text-[10px] text-slate-300">Password: <span class="text-amber-300 font-bold">${msg.password}</span></p>
+                                            <p class="text-[10px] text-slate-300">Validity: <span class="text-white font-bold">${msg.validity}</span></p>
+                                        </div>
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400 pt-1">
+                                            <span>Redeemable in Aura Wallet</span>
+                                            <span>${timeStr}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        } else if (msg.image) {
+                            msgBox.innerHTML += `
+                                <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
+                                    <div class="max-w-[70%] p-2 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
+                                        <img src="${msg.image}" class="rounded-xl max-h-48 object-cover w-full">
+                                        ${msg.text ? `<p class="text-xs px-1 text-slate-800">${msg.text}</p>` : ''}
+                                        <span class="text-[9px] text-slate-400 block text-right px-1">${timeStr}</span>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            msgBox.innerHTML += `
+                                <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
+                                    <div class="max-w-[75%] p-3 rounded-2xl text-xs font-medium ${isSenderAdmin ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'}">
+                                        <p>${msg.text}</p>
+                                        <span class="text-[9px] opacity-70 block mt-1 text-right">${timeStr}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     }
                 });
 
                 if (count === 0) {
-                    msgBox.innerHTML = `<p class="text-center text-slate-400 text-xs py-8">No messages yet. Send a gift voucher or reply below!</p>`;
+                    msgBox.innerHTML = `<p class="text-center text-slate-400 text-xs py-8">No messages yet. Send a gift card or reply below!</p>`;
                 }
                 msgBox.scrollTop = msgBox.scrollHeight;
             });
         }
 
-        window.sendAdminMessage = async function() {
-            let input = document.getElementById('admin-reply-input');
+        window.closeChatModal = function() {
+            document.getElementById('chat-modal').classList.add('hidden');
+            if (unsubscribeMessages) unsubscribeMessages();
+        }
+
+        window.sendModalMessage = async function() {
+            let input = document.getElementById('modal-chat-input');
             let text = input.value.trim();
             if (!text || !activeChatDeviceId) return;
 
@@ -378,10 +382,32 @@
             }
         }
 
-        // 3. Money Transfer / Gift Voucher Feature
-        window.openVoucherModal = function() {
-            if (!activeChatUserDocId) {
-                alert('Please select a customer first!');
+        window.handleChatImageUpload = function(event) {
+            let file = event.target.files[0];
+            if (!file || !activeChatDeviceId) return;
+
+            let reader = new FileReader();
+            reader.onload = async function(e) {
+                let base64Image = e.target.result;
+                try {
+                    await addDoc(collection(db, "chats"), {
+                        deviceId: activeChatDeviceId,
+                        sender: 'admin',
+                        image: base64Image,
+                        text: "📸 Attached Image",
+                        timestamp: Date.now()
+                    });
+                } catch (err) {
+                    alert('Error sending image: ' + err.message);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Virtual Gift Card Modal & Sender
+        window.openVoucherModalFromChat = function() {
+            if (!activeChatDeviceId) {
+                alert('Open a customer chat first!');
                 return;
             }
             document.getElementById('voucher-modal').classList.remove('hidden');
@@ -391,39 +417,90 @@
             document.getElementById('voucher-modal').classList.add('hidden');
         }
 
-        window.transferVoucherMoney = async function() {
-            let amountInput = document.getElementById('voucher-amount-input').value;
-            let amount = parseFloat(amountInput);
+        window.generateAndSendGiftCard = async function() {
+            let amount = parseFloat(document.getElementById('voucher-amount-input').value) || 500;
+            let validity = document.getElementById('voucher-validity-input').value || '30 Days';
 
-            if (!amount || amount <= 0) {
-                alert('Please enter a valid amount.');
-                return;
-            }
+            let cardNo = 'AURA-' + Math.floor(1000 + Math.random() * 9000) + '-' + Math.floor(1000 + Math.random() * 9000);
+            let password = Math.random().toString(36.substring(2, 8)).toUpperCase() + Math.floor(100 + Math.random() * 900);
 
             try {
-                let newWalletBalance = activeChatUserWallet + amount;
+                let userDocId = activeChatUserDocId;
+                if (!userDocId && allUsersMap[activeChatDeviceId]) {
+                    userDocId = allUsersMap[activeChatDeviceId].docId;
+                }
 
-                // Update customer wallet in database
-                await updateDoc(doc(db, "users", activeChatUserDocId), {
-                    walletBalance: newWalletBalance
-                });
+                if (userDocId) {
+                    let newWalletBalance = activeChatUserWallet + amount;
+                    await updateDoc(doc(db, "users", userDocId), {
+                        walletBalance: newWalletBalance
+                    });
+                    activeChatUserWallet = newWalletBalance;
+                    document.getElementById('modal-chat-phone').textContent = document.getElementById('modal-chat-phone').textContent.split('|')[0] + ' | Wallet: ₹' + newWalletBalance;
+                }
 
-                // Send an automated chat message to customer about the gift voucher
+                // Send Gift Card message to chat
                 await addDoc(collection(db, "chats"), {
                     deviceId: activeChatDeviceId,
                     sender: 'admin',
-                    text: `🎁 Congratulations! You have received a Gift Voucher / Wallet Transfer of ₹${amount}. Added to your Aura Wallet!`,
+                    type: 'giftcard',
+                    amount: amount,
+                    cardNo: cardNo,
+                    password: password,
+                    validity: validity,
                     timestamp: Date.now()
                 });
 
-                alert(`Successfully transferred ₹${amount} to customer's wallet! 🎉`);
-                activeChatUserWallet = newWalletBalance;
-                document.getElementById('chat-customer-phone').textContent = document.getElementById('chat-customer-phone').textContent.split('|')[0] + ' | Wallet: ₹' + newWalletBalance;
+                alert(`Gift Card of ₹${amount} successfully sent to customer! 🎉`);
                 closeVoucherModal();
-                loadChatUsers();
             } catch (err) {
-                alert('Error transferring money: ' + err.message);
+                alert('Error sending gift card: ' + err.message);
             }
+        }
+
+        // Print Shipping Label Fix
+        window.printShippingLabel = function(order) {
+            let formattedDate = order.timestamp ? new Date(order.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+            
+            let container = document.getElementById('printable-invoice');
+            container.style.display = 'block';
+            container.innerHTML = `
+                <div style="font-family: Arial, sans-serif; border: 3px solid #000; padding: 25px; max-width: 650px; margin: 20px auto; background: #fff; color: #000;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 15px;">
+                        <h2 style="margin: 0; font-size: 24px; font-weight: 900;">AuraGadget Dispatch Label 📦</h2>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 12px; font-weight: bold;">Order ID: ${order.id}</p>
+                            <p style="margin: 0; font-size: 11px;">Date: ${formattedDate}</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; background: #eee; padding: 5px;">Shipping Address (Deliver To):</h4>
+                        <p style="margin: 4px 0; font-size: 16px; font-weight: bold;">👤 ${order.customerName || 'N/A'}</p>
+                        <p style="margin: 4px 0; font-size: 14px; font-weight: bold;">📞 Mobile: ${order.customerPhone || 'N/A'}</p>
+                        <p style="margin: 4px 0; font-size: 14px; line-height: 1.4;">📍 Address: ${order.shippingAddress || 'N/A'}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; background: #eee; padding: 5px;">Purchased Items Summary:</h4>
+                        <p style="margin: 6px 0; font-size: 13px; font-weight: bold; background: #f9f9f9; padding: 10px; border: 1px dashed #ccc;">${order.itemsSummary || 'N/A'}</p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; font-size: 13px; font-weight: bold;">
+                        <p style="margin: 0;">Payment Method: ${order.paymentMethod || 'COD'}</p>
+                        <p style="margin: 0; font-size: 15px;">Total Amount: ${order.total}</p>
+                    </div>
+
+                    <div style="margin-top: 25px; text-align: center; font-size: 10px; color: #555; border-top: 1px dashed #aaa; padding-top: 8px;">
+                        <p style="margin: 0;">Thank you for shopping with AuraGadget! Handle with care.</p>
+                    </div>
+                </div>
+            `;
+
+            window.print();
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 1000);
         }
     </script>
 </body>

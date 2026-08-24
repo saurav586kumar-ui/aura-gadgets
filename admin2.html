@@ -154,39 +154,12 @@
         let allChatsMap = {};
 
         document.addEventListener("DOMContentLoaded", function() {
-            initRealtimeListeners();
+            loadOrders();
         });
-
-        function initRealtimeListeners() {
-            onSnapshot(collection(db, "users"), (snapshot) => {
-                allUsersMap = {};
-                snapshot.forEach(docSnap => {
-                    let data = docSnap.data();
-                    if(data.deviceId) {
-                        allUsersMap[data.deviceId] = { docId: docSnap.id, ...data };
-                    }
-                });
-                loadOrders();
-            }, (error) => console.error("Users snapshot error:", error));
-
-            onSnapshot(collection(db, "chats"), (snapshot) => {
-                allChatsMap = {};
-                snapshot.forEach(docSnap => {
-                    let msg = docSnap.data();
-                    if(msg.deviceId) {
-                        if(!allChatsMap[msg.deviceId]) {
-                            allChatsMap[msg.deviceId] = [];
-                        }
-                        allChatsMap[msg.deviceId].push(msg);
-                    }
-                });
-                loadOrders();
-            }, (error) => console.error("Chats snapshot error:", error));
-        }
 
         window.loadOrders = async function() {
             let tbody = document.getElementById('admin-orders-table');
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading orders...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading orders from Firebase...</td></tr>`;
 
             try {
                 const querySnapshot = await getDocs(collection(db, "orders"));
@@ -195,11 +168,11 @@
                     orders.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                orders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                console.log("Fetched Orders:", orders); // Console mein check karne ke liye
 
                 tbody.innerHTML = '';
                 if (orders.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">No orders found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 font-bold">Database mein koi order nahi mila! (Collection 'orders' khali hai).</td></tr>`;
                     return;
                 }
 
@@ -209,18 +182,7 @@
                     let userData = allUsersMap[deviceId] || {};
                     let unreadCount = userData.unreadAdminCount || 0;
 
-                    let chatsList = allChatsMap[deviceId] || [];
-                    let lastMsgText = "No messages yet";
-                    let lastMsgTime = "";
-                    if(chatsList.length > 0) {
-                        chatsList.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
-                        let last = chatsList[chatsList.length - 1];
-                        lastMsgText = (last.sender === 'admin' ? 'You: ' : '') + (last.type === 'giftcard' ? '🎁 [Gift Card]' : (last.image ? '📷 [Image]' : last.text));
-                        lastMsgTime = last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                    }
-
-                    // Escape order object safely for inline onclick
-                    let orderJson = JSON.stringify(order).replace(/"/g, '&quot;');
+                    let safeOrderObj = encodeURIComponent(JSON.stringify(order));
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50 transition border-b border-slate-100">
@@ -248,12 +210,10 @@
                                 <button onclick="openChatModal('${deviceId}', '${userData.docId || ''}', '${order.customerName || 'Customer'}', '${order.customerPhone || 'N/A'}', ${userData.walletBalance || 0})" 
                                     class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition relative flex items-center gap-1.5 mx-auto">
                                     💬 Chat
-                                    ${unreadCount > 0 ? `<span class="absolute -top-1.5 -right-1.5 bg-pink-500 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full animate-pulse shadow">${unreadCount}</span>` : ''}
                                 </button>
-                                <p class="text-[9px] text-slate-400 mt-1 max-w-[120px] truncate" title="${lastMsgText}">${lastMsgTime ? '['+lastMsgTime+'] ' : ''}${lastMsgText}</p>
                             </td>
                             <td class="p-4 text-center whitespace-nowrap">
-                                <button onclick='printShippingLabel(${orderJson})' class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow flex items-center gap-1.5 mx-auto">
+                                <button onclick="printShippingLabelFromData('${safeOrderObj}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow flex items-center gap-1.5 mx-auto">
                                     🖨️ Label
                                 </button>
                             </td>
@@ -261,7 +221,8 @@
                     `;
                 });
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500">Error loading orders: ${err.message}</td></tr>`;
+                console.error("Error loading orders:", err);
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 font-bold">Error loading orders: ${err.message}</td></tr>`;
             }
         }
 
@@ -274,10 +235,9 @@
             }
         }
 
-        // Chat Modal Logic
         window.openChatModal = async function(deviceId, userDocId, name, phone, walletBalance) {
             if (!deviceId) {
-                alert('Device ID not found for this customer.');
+                alert('Device ID not found for this customer order.');
                 return;
             }
             activeChatDeviceId = deviceId;
@@ -287,12 +247,6 @@
             document.getElementById('modal-chat-name').textContent = name;
             document.getElementById('modal-chat-phone').textContent = 'Phone: ' + phone + ' | Wallet: ₹' + walletBalance;
             document.getElementById('chat-modal').classList.remove('hidden');
-
-            if (userDocId) {
-                try {
-                    await updateDoc(doc(db, "users", userDocId), { unreadAdminCount: 0 });
-                } catch(e) {}
-            }
 
             if (unsubscribeMessages) unsubscribeMessages();
 
@@ -404,7 +358,6 @@
             reader.readAsDataURL(file);
         }
 
-        // Virtual Gift Card Modal & Sender
         window.openVoucherModalFromChat = function() {
             if (!activeChatDeviceId) {
                 alert('Open a customer chat first!');
@@ -422,24 +375,17 @@
             let validity = document.getElementById('voucher-validity-input').value || '30 Days';
 
             let cardNo = 'AURA-' + Math.floor(1000 + Math.random() * 9000) + '-' + Math.floor(1000 + Math.random() * 9000);
-            let password = Math.random().toString(36.substring(2, 8)).toUpperCase() + Math.floor(100 + Math.random() * 900);
+            let password = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(100 + Math.random() * 900);
 
             try {
-                let userDocId = activeChatUserDocId;
-                if (!userDocId && allUsersMap[activeChatDeviceId]) {
-                    userDocId = allUsersMap[activeChatDeviceId].docId;
-                }
-
-                if (userDocId) {
+                if (activeChatUserDocId) {
                     let newWalletBalance = activeChatUserWallet + amount;
-                    await updateDoc(doc(db, "users", userDocId), {
+                    await updateDoc(doc(db, "users", activeChatUserDocId), {
                         walletBalance: newWalletBalance
                     });
                     activeChatUserWallet = newWalletBalance;
-                    document.getElementById('modal-chat-phone').textContent = document.getElementById('modal-chat-phone').textContent.split('|')[0] + ' | Wallet: ₹' + newWalletBalance;
                 }
 
-                // Send Gift Card message to chat
                 await addDoc(collection(db, "chats"), {
                     deviceId: activeChatDeviceId,
                     sender: 'admin',
@@ -451,15 +397,15 @@
                     timestamp: Date.now()
                 });
 
-                alert(`Gift Card of ₹${amount} successfully sent to customer! 🎉`);
+                alert(`Gift Card of ₹${amount} successfully sent! 🎉`);
                 closeVoucherModal();
             } catch (err) {
                 alert('Error sending gift card: ' + err.message);
             }
         }
 
-        // Print Shipping Label Fix
-        window.printShippingLabel = function(order) {
+        window.printShippingLabelFromData = function(encodedOrder) {
+            let order = JSON.parse(decodeURIComponent(encodedOrder));
             let formattedDate = order.timestamp ? new Date(order.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
             
             let container = document.getElementById('printable-invoice');
@@ -489,10 +435,6 @@
                     <div style="display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 10px; font-size: 13px; font-weight: bold;">
                         <p style="margin: 0;">Payment Method: ${order.paymentMethod || 'COD'}</p>
                         <p style="margin: 0; font-size: 15px;">Total Amount: ${order.total}</p>
-                    </div>
-
-                    <div style="margin-top: 25px; text-align: center; font-size: 10px; color: #555; border-top: 1px dashed #aaa; padding-top: 8px;">
-                        <p style="margin: 0;">Thank you for shopping with AuraGadget! Handle with care.</p>
                     </div>
                 </div>
             `;

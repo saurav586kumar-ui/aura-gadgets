@@ -30,20 +30,24 @@
     <header class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm gap-4">
         <div>
             <h1 class="text-2xl md:text-3xl font-black font-brand text-slate-900">AuraGadget Admin Dashboard ⚡</h1>
-            <p class="text-xs text-slate-500 font-medium">Manage orders, print shipping labels, chat with images & send virtual gift cards.</p>
+            <p class="text-xs text-slate-500 font-medium">Manage orders, search details, chat with images & send virtual gift cards.</p>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="loadOrders()" class="px-5 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600 text-white transition shadow-md flex items-center gap-2">🔄 Refresh Dashboard</button>
+            <button onclick="fetchAllData()" class="px-5 py-2.5 rounded-2xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-md flex items-center gap-2">🔄 Refresh Dashboard</button>
         </div>
     </header>
 
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto space-y-6">
 
-        <!-- ORDERS MANAGEMENT SECTION -->
-        <section class="space-y-6">
-            <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
-                <h2 class="text-lg font-black font-brand text-slate-800">All Customer Orders & Direct Chats (Newest First)</h2>
+        <!-- ORDERS MANAGEMENT & SEARCH SECTION -->
+        <section class="space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 gap-4">
+                <h2 class="text-lg font-black font-brand text-slate-800">All Customer Orders & Direct Chats</h2>
+                <!-- Search Bar -->
+                <div class="w-full md:w-80">
+                    <input type="text" id="order-search-input" placeholder="🔍 Search by name, phone or ID..." onkeyup="filterOrders()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                </div>
             </div>
 
             <div class="admin-card overflow-hidden">
@@ -101,7 +105,7 @@
         </div>
     </div>
 
-    <!-- VIRTUAL GIFT CARD GENERATOR / SENDER MODAL -->
+    <!-- VIRTUAL GIFT CARD MODAL -->
     <div id="voucher-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="admin-card max-w-sm w-full p-6 space-y-4 relative bg-white">
             <h3 class="text-lg font-black font-brand text-slate-900">Send Virtual e-Gift Card 🎁</h3>
@@ -152,78 +156,138 @@
         let unsubscribeMessages = null;
         let allUsersMap = {};
         let allChatsMap = {};
+        let allOrdersList = [];
 
         document.addEventListener("DOMContentLoaded", function() {
-            loadOrders();
+            fetchAllData();
+            initRealtimeSync();
         });
 
-        window.loadOrders = async function() {
+        function initRealtimeSync() {
+            // Real-time listener for users
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                allUsersMap = {};
+                snapshot.forEach(docSnap => {
+                    let data = docSnap.data();
+                    if(data.deviceId) {
+                        allUsersMap[data.deviceId] = { docId: docSnap.id, ...data };
+                    }
+                });
+                renderOrdersTable(allOrdersList);
+            });
+
+            // Real-time listener for chats
+            onSnapshot(collection(db, "chats"), (snapshot) => {
+                allChatsMap = {};
+                snapshot.forEach(docSnap => {
+                    let msg = docSnap.data();
+                    if(msg.deviceId) {
+                        if(!allChatsMap[msg.deviceId]) {
+                            allChatsMap[msg.deviceId] = [];
+                        }
+                        allChatsMap[msg.deviceId].push(msg);
+                    }
+                });
+                renderOrdersTable(allOrdersList);
+            });
+        }
+
+        window.fetchAllData = async function() {
             let tbody = document.getElementById('admin-orders-table');
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading orders from Firebase...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Loading orders from database...</td></tr>`;
 
             try {
                 const querySnapshot = await getDocs(collection(db, "orders"));
-                let orders = [];
+                allOrdersList = [];
                 querySnapshot.forEach((docSnap) => {
-                    orders.push({ id: docSnap.id, ...docSnap.data() });
+                    allOrdersList.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                console.log("Fetched Orders:", orders); // Console mein check karne ke liye
-
-                tbody.innerHTML = '';
-                if (orders.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 font-bold">Database mein koi order nahi mila! (Collection 'orders' khali hai).</td></tr>`;
-                    return;
-                }
-
-                orders.forEach(order => {
-                    let formattedDate = order.timestamp ? new Date(order.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
-                    let deviceId = order.deviceId || '';
-                    let userData = allUsersMap[deviceId] || {};
-                    let unreadCount = userData.unreadAdminCount || 0;
-
-                    let safeOrderObj = encodeURIComponent(JSON.stringify(order));
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                            <td class="p-4 font-bold text-slate-600 whitespace-nowrap">${formattedDate}</td>
-                            <td class="p-4">
-                                <p class="font-bold text-slate-900">${order.customerName || 'N/A'}</p>
-                                <p class="text-[10px] text-slate-400">${order.customerPhone || 'N/A'}</p>
-                                <p class="text-[10px] text-slate-500 mt-0.5 max-w-xs truncate">📍 ${order.shippingAddress || 'N/A'}</p>
-                            </td>
-                            <td class="p-4 max-w-xs truncate" title="${order.itemsSummary}">${order.itemsSummary || 'N/A'}</td>
-                            <td class="p-4 whitespace-nowrap">
-                                <p class="font-black text-slate-900">${order.total}</p>
-                                <span class="px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-bold text-slate-600">${order.paymentMethod || 'COD'}</span>
-                            </td>
-                            <td class="p-4 whitespace-nowrap">
-                                <select onchange="updateOrderStatus('${order.id}', this.value)" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none focus:border-indigo-500">
-                                    <option value="Dispatched" ${order.status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
-                                    <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
-                                    <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                                    <option value="Refunded" ${order.status === 'Refunded' ? 'selected' : ''}>Refunded</option>
-                                    <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                                </select>
-                            </td>
-                            <td class="p-4 text-center whitespace-nowrap">
-                                <button onclick="openChatModal('${deviceId}', '${userData.docId || ''}', '${order.customerName || 'Customer'}', '${order.customerPhone || 'N/A'}', ${userData.walletBalance || 0})" 
-                                    class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition relative flex items-center gap-1.5 mx-auto">
-                                    💬 Chat
-                                </button>
-                            </td>
-                            <td class="p-4 text-center whitespace-nowrap">
-                                <button onclick="printShippingLabelFromData('${safeOrderObj}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow flex items-center gap-1.5 mx-auto">
-                                    🖨️ Label
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
+                // Sort newest first
+                allOrdersList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                renderOrdersTable(allOrdersList);
             } catch (err) {
-                console.error("Error loading orders:", err);
+                console.error("Error fetching orders:", err);
                 tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 font-bold">Error loading orders: ${err.message}</td></tr>`;
             }
+        }
+
+        function renderOrdersTable(orders) {
+            let tbody = document.getElementById('admin-orders-table');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-bold">No orders found.</td></tr>`;
+                return;
+            }
+
+            orders.forEach(order => {
+                let formattedDate = order.timestamp ? new Date(order.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+                let deviceId = order.deviceId || '';
+                let userData = allUsersMap[deviceId] || {};
+                let unreadCount = userData.unreadAdminCount || 0;
+
+                let chatsList = allChatsMap[deviceId] || [];
+                let lastMsgText = "No messages yet";
+                let lastMsgTime = "";
+                if(chatsList.length > 0) {
+                    chatsList.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    let last = chatsList[chatsList.length - 1];
+                    lastMsgText = (last.sender === 'admin' ? 'You: ' : '') + (last.type === 'giftcard' ? '🎁 [Gift Card]' : (last.image ? '📷 [Image]' : last.text));
+                    lastMsgTime = last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                }
+
+                let safeOrderObj = encodeURIComponent(JSON.stringify(order));
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-4 font-bold text-slate-600 whitespace-nowrap">${formattedDate}</td>
+                        <td class="p-4">
+                            <p class="font-bold text-slate-900">${order.customerName || 'N/A'}</p>
+                            <p class="text-[10px] text-slate-400">${order.customerPhone || 'N/A'}</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5 max-w-xs truncate">📍 ${order.shippingAddress || 'N/A'}</p>
+                        </td>
+                        <td class="p-4 max-w-xs truncate" title="${order.itemsSummary}">${order.itemsSummary || 'N/A'}</td>
+                        <td class="p-4 whitespace-nowrap">
+                            <p class="font-black text-slate-900">${order.total}</p>
+                            <span class="px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-bold text-slate-600">${order.paymentMethod || 'COD'}</span>
+                        </td>
+                        <td class="p-4 whitespace-nowrap">
+                            <select onchange="updateOrderStatus('${order.id}', this.value)" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none focus:border-indigo-500">
+                                <option value="Dispatched" ${order.status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
+                                <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery</option>
+                                <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                                <option value="Refunded" ${order.status === 'Refunded' ? 'selected' : ''}>Refunded</option>
+                                <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                        </td>
+                        <td class="p-4 text-center whitespace-nowrap">
+                            <button onclick="openChatModal('${deviceId}', '${userData.docId || ''}', '${order.customerName || 'Customer'}', '${order.customerPhone || 'N/A'}', ${userData.walletBalance || 0})" 
+                                class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition relative flex items-center gap-1.5 mx-auto">
+                                💬 Chat
+                                ${unreadCount > 0 ? `<span class="absolute -top-1.5 -right-1.5 bg-pink-500 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full animate-pulse shadow">${unreadCount}</span>` : ''}
+                            </button>
+                            <p class="text-[9px] text-slate-400 mt-1 max-w-[120px] truncate" title="${lastMsgText}">${lastMsgTime ? '['+lastMsgTime+'] ' : ''}${lastMsgText}</p>
+                        </td>
+                        <td class="p-4 text-center whitespace-nowrap">
+                            <button onclick="printShippingLabelFromData('${safeOrderObj}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow flex items-center gap-1.5 mx-auto">
+                                🖨️ Label
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.filterOrders = function() {
+            let queryText = document.getElementById('order-search-input').value.toLowerCase();
+            let filtered = allOrdersList.filter(order => {
+                let name = (order.customerName || '').toLowerCase();
+                let phone = (order.customerPhone || '').toLowerCase();
+                let id = (order.id || '').toLowerCase();
+                return name.includes(queryText) || phone.includes(queryText) || id.includes(queryText);
+            });
+            renderOrdersTable(filtered);
         }
 
         window.updateOrderStatus = async function(orderId, newStatus) {
@@ -235,6 +299,7 @@
             }
         }
 
+        // Chat Modal Logic
         window.openChatModal = async function(deviceId, userDocId, name, phone, walletBalance) {
             if (!deviceId) {
                 alert('Device ID not found for this customer order.');
@@ -247,6 +312,12 @@
             document.getElementById('modal-chat-name').textContent = name;
             document.getElementById('modal-chat-phone').textContent = 'Phone: ' + phone + ' | Wallet: ₹' + walletBalance;
             document.getElementById('chat-modal').classList.remove('hidden');
+
+            if (userDocId) {
+                try {
+                    await updateDoc(doc(db, "users", userDocId), { unreadAdminCount: 0 });
+                } catch(e) {}
+            }
 
             if (unsubscribeMessages) unsubscribeMessages();
 
@@ -378,12 +449,18 @@
             let password = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(100 + Math.random() * 900);
 
             try {
-                if (activeChatUserDocId) {
+                let userDocId = activeChatUserDocId;
+                if (!userDocId && allUsersMap[activeChatDeviceId]) {
+                    userDocId = allUsersMap[activeChatDeviceId].docId;
+                }
+
+                if (userDocId) {
                     let newWalletBalance = activeChatUserWallet + amount;
-                    await updateDoc(doc(db, "users", activeChatUserDocId), {
+                    await updateDoc(doc(db, "users", userDocId), {
                         walletBalance: newWalletBalance
                     });
                     activeChatUserWallet = newWalletBalance;
+                    document.getElementById('modal-chat-phone').textContent = document.getElementById('modal-chat-phone').textContent.split('|')[0] + ' | Wallet: ₹' + newWalletBalance;
                 }
 
                 await addDoc(collection(db, "chats"), {

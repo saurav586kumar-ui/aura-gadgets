@@ -20,10 +20,10 @@
     <div class="max-w-7xl mx-auto space-y-6">
         <!-- Top Navigation / Header -->
         <div class="flex justify-between items-center bg-white/80 backdrop-blur-md px-6 py-4 rounded-3xl shadow-sm border border-indigo-100">
-            <div class="flex items-center gap-3">
+            <a href="index.html" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition">
                 <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-pink-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-200">A</div>
                 <h1 class="text-lg font-black tracking-wider text-gray-900 uppercase">Aura Gadget</h1>
-            </div>
+            </a>
             <div class="flex items-center gap-3">
                 <a href="cart.html" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-2xl hover:bg-indigo-100 transition shadow-sm flex items-center gap-1.5">🛒 Cart</a>
                 <a href="index.html" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-2xl hover:bg-indigo-100 transition shadow-sm flex items-center gap-1.5">🏠 Home</a>
@@ -63,19 +63,73 @@
 
                 <!-- PROFILE SECTION -->
                 <div id="section-profile" class="hidden bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-indigo-100 space-y-4">
-                    <h3 class="font-extrabold text-base text-gray-900">Personal Profile</h3>
-                    <p class="text-xs text-gray-500">Manage your account details and preferences.</p>
-                    <div id="profile-content" class="space-y-3 text-xs text-gray-700">
-                        <!-- Loaded dynamically -->
+                    <div class="flex justify-between items-center border-b border-indigo-50 pb-3">
+                        <div>
+                            <h3 class="font-extrabold text-base text-gray-900">Personal Profile</h3>
+                            <p class="text-xs text-gray-500">Update your personal information below.</p>
+                        </div>
+                        <button onclick="toggleEditProfile()" id="edit-profile-btn" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition">✏️ Edit Profile</button>
                     </div>
+
+                    <div id="profile-view-mode" class="space-y-3 text-xs text-gray-700">
+                        <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-2">
+                            <p><strong>Full Name:</strong> <span id="view-name">Sumit</span></p>
+                            <p><strong>Phone Number:</strong> <span id="view-phone">08002727626</span></p>
+                            <p><strong>Email Address:</strong> <span id="view-email">sumitiitan58@gmail.com</span></p>
+                        </div>
+                    </div>
+
+                    <form id="profile-edit-form" onsubmit="saveUserProfile(event)" class="hidden space-y-3 text-xs">
+                        <div class="space-y-1">
+                            <label class="font-bold text-gray-600">Full Name</label>
+                            <input type="text" id="edit-name" required class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-bold text-gray-600">Phone Number</label>
+                            <input type="text" id="edit-phone" required class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-bold text-gray-600">Email Address</label>
+                            <input type="email" id="edit-email" required class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 bg-white">
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="button" onclick="toggleEditProfile()" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-xl font-bold">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">Save Changes</button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- WALLET SECTION -->
-                <div id="section-wallet" class="hidden bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-indigo-100 space-y-4">
-                    <h3 class="font-extrabold text-base text-gray-900">Gift Card & Wallet</h3>
-                    <p class="text-xs text-gray-500">Check your balance and redeem gift cards.</p>
-                    <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-xs">
-                        <p class="font-bold text-indigo-900">Wallet Balance: ₹0.00</p>
+                <div id="section-wallet" class="hidden bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-indigo-100 space-y-6">
+                    <div>
+                        <h3 class="font-extrabold text-base text-gray-900">Gift Card & Wallet</h3>
+                        <p class="text-xs text-gray-500">Manage your virtual credits and redeem gift vouchers.</p>
+                    </div>
+
+                    <!-- Virtual Wallet Card -->
+                    <div class="p-6 rounded-3xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 text-white shadow-lg space-y-4 relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs uppercase tracking-widest font-extrabold opacity-80">Aura Virtual Wallet</span>
+                            <span class="text-xs px-3 py-1 bg-white/20 backdrop-blur-md rounded-full font-bold">Active</span>
+                        </div>
+                        <div>
+                            <p class="text-xs opacity-80">Available Balance</p>
+                            <h2 id="wallet-balance-display" class="text-3xl font-black mt-1">₹0.00</h2>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px] opacity-90 pt-2 border-t border-white/20">
+                            <span>Secure Credit System</span>
+                            <span>Aura Pay</span>
+                        </div>
+                    </div>
+
+                    <!-- Redeem Voucher Box -->
+                    <div class="p-5 rounded-3xl bg-indigo-50/50 border border-indigo-100 space-y-3">
+                        <h4 class="font-extrabold text-xs text-indigo-900 uppercase">Redeem Gift Voucher</h4>
+                        <div class="flex gap-2">
+                            <input type="text" id="voucher-code-input" placeholder="Enter Gift Card Code (e.g., AURA500)" class="flex-1 p-3 border border-indigo-200 rounded-xl text-xs bg-white focus:outline-none focus:border-indigo-500">
+                            <button onclick="redeemGiftCard()" class="px-5 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow-sm">Redeem</button>
+                        </div>
                     </div>
                 </div>
 
@@ -89,7 +143,6 @@
                         <button onclick="toggleAddressForm()" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow-sm">+ Add New Address</button>
                     </div>
 
-                    <!-- New Address Box Form -->
                     <div id="new-address-box" class="hidden p-4 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-3">
                         <h4 class="font-extrabold text-xs text-indigo-900 uppercase">Add New Address Form</h4>
                         <form onsubmit="saveNewAddress(event)" class="space-y-3 text-xs">
@@ -131,25 +184,52 @@
 
                 <!-- NOTIFICATION SECTION -->
                 <div id="section-notifications" class="hidden bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-indigo-100 space-y-4">
-                    <h3 class="font-extrabold text-base text-gray-900">Notification History</h3>
-                    <p class="text-xs text-gray-500">Check recent updates and alerts.</p>
-                    <div class="p-4 bg-white rounded-2xl border border-indigo-100 text-xs text-gray-500">
-                        No recent notifications.
+                    <div class="border-b border-indigo-50 pb-3">
+                        <h3 class="font-extrabold text-base text-gray-900">Notification History</h3>
+                        <p class="text-xs text-gray-500">Stay updated with your order statuses and system alerts.</p>
+                    </div>
+                    <div id="notifications-container" class="space-y-3">
+                        <!-- Notifications loaded dynamically -->
                     </div>
                 </div>
 
                 <!-- ABOUT US SECTION -->
-                <div id="section-about" class="hidden bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-indigo-100 space-y-4">
-                    <h3 class="font-extrabold text-base text-gray-900">About Us</h3>
-                    <p class="text-xs text-gray-600 leading-relaxed">
-                        Welcome to Aura Gadget! We provide the best quality electronic items, gadgets, and accessories straight to your doorstep with trusted service and support.
-                    </p>
+                <div id="section-about" class="hidden bg-white/90 backdrop-blur-md p-8 rounded-3xl shadow-sm border border-indigo-100 space-y-6">
+                    <div class="flex items-center gap-4 border-b border-indigo-50 pb-6">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-pink-500 text-white flex items-center justify-center font-bold text-2xl shadow-md">A</div>
+                        <div>
+                            <h2 class="text-xl font-black text-gray-900">Aura Gadgets</h2>
+                            <p class="text-xs text-indigo-600 font-bold">Your Ultimate Tech & Electronics Destination</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4 text-xs text-gray-600 leading-relaxed">
+                        <p>Welcome to <strong>Aura Gadgets</strong>, where innovation meets reliability. We pride ourselves on delivering cutting-edge electronics, smart accessories, and everyday gadget essentials right to your doorstep with unmatched speed and care.</p>
+                        <p>Our mission is to make high-tech products accessible to everyone while ensuring top-notch customer service, secure payments, easy returns, and direct live support for every purchase you make.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                            <div class="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
+                                <h4 class="font-extrabold text-indigo-900 text-sm">100%</h4>
+                                <p class="text-[11px] text-gray-500 mt-1">Genuine Products</p>
+                            </div>
+                            <div class="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
+                                <h4 class="font-extrabold text-indigo-900 text-sm">24/7</h4>
+                                <p class="text-[11px] text-gray-500 mt-1">Live Admin Support</p>
+                            </div>
+                            <div class="p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
+                                <h4 class="font-extrabold text-indigo-900 text-sm">Fast</h4>
+                                <p class="text-[11px] text-gray-500 mt-1">Pan-India Delivery</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- CONTACT US SECTION -->
                 <div id="section-contact" class="hidden bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-indigo-100 space-y-4">
                     <h3 class="font-extrabold text-base text-gray-900">Contact Us</h3>
-                    <p class="text-xs text-gray-600">Have questions? Reach out to us at <a href="mailto:sumitiitan58@gmail.com" class="text-indigo-600 font-bold underline">sumitiitan58@gmail.com</a>.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">Have any questions, feedback, or facing difficulties with your orders? Reach out to our dedicated support team anytime.</p>
+                    <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-2 text-xs">
+                        <p><strong>Email Support:</strong> <a href="mailto:sumitiitan58@gmail.com" class="text-indigo-600 font-bold underline">sumitiitan58@gmail.com</a></p>
+                        <p><strong>Response Time:</strong> Within 24 Hours</p>
+                    </div>
                 </div>
 
             </div>
@@ -227,7 +307,6 @@
 
         const tabs = ['profile', 'wallet', 'addresses', 'orders', 'notifications', 'about', 'contact'];
 
-        // Tab Switching Logic with State Preservation
         window.switchTab = function(tabName) {
             localStorage.setItem('aura_active_profile_tab', tabName);
             
@@ -249,24 +328,82 @@
             }
         }
 
-        // Restore active tab on page load
         window.addEventListener('DOMContentLoaded', () => {
             const savedTab = localStorage.getItem('aura_active_profile_tab') || 'orders';
             switchTab(savedTab);
-            loadUserOrders();
-            loadUserAddresses();
             loadUserProfile();
+            loadUserWallet();
+            loadUserAddresses();
+            loadUserOrders();
         });
 
+        // Profile Functions
         function loadUserProfile() {
-            let container = document.getElementById('profile-content');
-            let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
-            container.innerHTML = `
-                <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-2">
-                    <p><strong>Name:</strong> ${userProf.name || 'Sumit'}</p>
-                    <p><strong>Phone:</strong> ${userProf.phone || '08002727626'}</p>
-                </div>
-            `;
+            let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {
+                name: 'Sumit',
+                phone: '08002727626',
+                email: 'sumitiitan58@gmail.com'
+            };
+            document.getElementById('view-name').textContent = userProf.name;
+            document.getElementById('view-phone').textContent = userProf.phone;
+            document.getElementById('view-email').textContent = userProf.email;
+
+            document.getElementById('edit-name').value = userProf.name;
+            document.getElementById('edit-phone').value = userProf.phone;
+            document.getElementById('edit-email').value = userProf.email;
+        }
+
+        window.toggleEditProfile = function() {
+            let viewMode = document.getElementById('profile-view-mode');
+            let editForm = document.getElementById('profile-edit-form');
+            let btn = document.getElementById('edit-profile-btn');
+            
+            viewMode.classList.toggle('hidden');
+            editForm.classList.toggle('hidden');
+            btn.classList.toggle('hidden');
+        }
+
+        window.saveUserProfile = function(e) {
+            e.preventDefault();
+            let userProf = {
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                email: document.getElementById('edit-email').value
+            };
+            localStorage.setItem('aura_user_profile', JSON.stringify(userProf));
+            loadUserProfile();
+            toggleEditProfile();
+            alert('Profile updated successfully! ✨');
+        }
+
+        // Wallet & Gift Card Functions
+        function loadUserWallet() {
+            let balance = localStorage.getItem('aura_wallet_balance') || '0.00';
+            document.getElementById('wallet-balance-display').textContent = `₹${balance}`;
+        }
+
+        window.redeemGiftCard = function() {
+            let code = document.getElementById('voucher-code-input').value.trim().toUpperCase();
+            if (!code) {
+                alert('Please enter a voucher code.');
+                return;
+            }
+            let currentBalance = parseFloat(localStorage.getItem('aura_wallet_balance') || '0');
+            let addedAmount = 0;
+
+            if (code === 'AURA500') addedAmount = 500;
+            else if (code === 'AURA1000') addedAmount = 1000;
+            else if (code === 'WELCOME100') addedAmount = 100;
+            else {
+                alert('Invalid or expired gift card code!');
+                return;
+            }
+
+            currentBalance += addedAmount;
+            localStorage.setItem('aura_wallet_balance', currentBalance.toFixed(2));
+            loadUserWallet();
+            document.getElementById('voucher-code-input').value = '';
+            alert(`Successfully redeemed ₹${addedAmount}! Added to your wallet. 💰`);
         }
 
         // Address Management Functions
@@ -320,10 +457,11 @@
             loadUserAddresses();
         }
 
-        // Orders Loading & Management Functions
+        // Orders Loading & Notifications
         async function loadUserOrders() {
             let container = document.getElementById('orders-container');
-            container.innerHTML = `<p class="text-xs text-gray-400 p-4">Loading your device orders...</p>`;
+            let notifContainer = document.getElementById('notifications-container');
+            container.innerHTML = `<p class="text-xs text-gray-400 p-4">Loading your orders...</p>`;
             
             let deviceId = localStorage.getItem('aura_device_id');
             let orders = [];
@@ -337,7 +475,7 @@
                             orders.push({ id: docSnap.id, ...docSnap.data() });
                         });
                     } catch (indexErr) {
-                        console.warn("Query fallback triggered:", indexErr);
+                        console.warn("Query fallback:", indexErr);
                     }
                 }
 
@@ -353,8 +491,11 @@
                 }
 
                 container.innerHTML = '';
+                notifContainer.innerHTML = '';
+
                 if (orders.length === 0) {
                     container.innerHTML = `<p class="text-xs text-gray-400 text-center py-8 bg-white/60 rounded-2xl border border-indigo-100">No orders found.</p>`;
+                    notifContainer.innerHTML = `<p class="text-xs text-gray-400 p-4 bg-white/60 rounded-2xl border border-indigo-100">No notifications yet.</p>`;
                     return;
                 }
 
@@ -364,6 +505,17 @@
                     if (orderStatus !== 'Pending') hasNewUpdate = true;
                     let statusBg = orderStatus === 'Delivered' ? 'bg-green-100 text-green-700' : (orderStatus === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-700');
                     
+                    // Add to notification list
+                    notifContainer.innerHTML += `
+                        <div class="p-4 rounded-2xl border border-indigo-100 bg-white/70 backdrop-blur-sm flex justify-between items-center shadow-sm text-xs">
+                            <div>
+                                <p class="font-bold text-gray-900">Order #${order.id} Status Updated</p>
+                                <p class="text-gray-500 mt-0.5">Your order status is currently: <span class="font-extrabold uppercase text-indigo-600">${orderStatus}</span></p>
+                            </div>
+                            <span class="px-2.5 py-1 ${statusBg} font-black rounded-lg uppercase text-[10px]">${orderStatus}</span>
+                        </div>
+                    `;
+
                     let returnSection = '';
                     if (order.returnRequested) {
                         let rStatus = order.returnStatus || 'Pending';

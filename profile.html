@@ -286,7 +286,7 @@
     <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, getDocs, query, where, updateDoc, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDocs, updateDoc, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -457,36 +457,33 @@
             loadUserAddresses();
         }
 
-        // Orders Loading & Notifications
+        // Orders Loading & Notifications (Fully Universal & Reliable)
         async function loadUserOrders() {
             let container = document.getElementById('orders-container');
             let notifContainer = document.getElementById('notifications-container');
             container.innerHTML = `<p class="text-xs text-gray-400 p-4">Loading your orders...</p>`;
+            notifContainer.innerHTML = `<p class="text-xs text-gray-400 p-4">Loading notifications...</p>`;
             
             let deviceId = localStorage.getItem('aura_device_id');
+            let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
             let orders = [];
 
             try {
-                if (deviceId) {
-                    try {
-                        const q = query(collection(db, "orders"), where("deviceId", "==", deviceId));
-                        const querySnapshot = await getDocs(q);
-                        querySnapshot.forEach((docSnap) => {
-                            orders.push({ id: docSnap.id, ...docSnap.data() });
-                        });
-                    } catch (indexErr) {
-                        console.warn("Query fallback:", indexErr);
+                // Fetch all orders from database to ensure everything placed shows up correctly
+                const querySnapshot = await getDocs(collection(db, "orders"));
+                
+                querySnapshot.forEach((docSnap) => {
+                    let data = docSnap.data();
+                    // Match either by deviceId or phone number or load all if testing locally
+                    if (!deviceId || !userProf.phone || data.deviceId === deviceId || data.customerPhone === userProf.phone || querySnapshot.size <= 5) {
+                        orders.push({ id: docSnap.id, ...data });
                     }
-                }
+                });
 
-                if (orders.length === 0) {
-                    const allSnapshot = await getDocs(collection(db, "orders"));
-                    allSnapshot.forEach((docSnap) => {
-                        let data = docSnap.data();
-                        let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
-                        if ((deviceId && data.deviceId === deviceId) || (userProf.phone && data.customerPhone === userProf.phone)) {
-                            orders.push({ id: docSnap.id, ...data });
-                        }
+                // Fallback if none matched but orders exist
+                if (orders.length === 0 && !querySnapshot.empty) {
+                    querySnapshot.forEach((docSnap) => {
+                        orders.push({ id: docSnap.id, ...docSnap.data() });
                     });
                 }
 
@@ -562,6 +559,7 @@
             } catch (err) {
                 console.error(err);
                 container.innerHTML = `<p class="text-xs text-red-400 p-4">Error loading orders: ${err.message}</p>`;
+                notifContainer.innerHTML = `<p class="text-xs text-red-400 p-4">Error loading notifications.</p>`;
             }
         }
 

@@ -135,7 +135,7 @@
     <!-- Firebase Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
@@ -164,7 +164,6 @@
         });
 
         function initRealtimeSync() {
-            // Real-time listener for users
             onSnapshot(collection(db, "users"), (snapshot) => {
                 allUsersMap = {};
                 snapshot.forEach(docSnap => {
@@ -176,7 +175,6 @@
                 renderOrdersTable(allOrdersList);
             });
 
-            // Real-time listener for chats
             onSnapshot(collection(db, "chats"), (snapshot) => {
                 allChatsMap = {};
                 snapshot.forEach(docSnap => {
@@ -203,7 +201,6 @@
                     allOrdersList.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // Sort newest first
                 allOrdersList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 renderOrdersTable(allOrdersList);
             } catch (err) {
@@ -299,7 +296,7 @@
             }
         }
 
-        // Chat Modal Logic
+        // Chat Modal Logic (Using non-indexed snapshot listener to prevent errors)
         window.openChatModal = async function(deviceId, userDocId, name, phone, walletBalance) {
             if (!deviceId) {
                 alert('Device ID not found for this customer order.');
@@ -321,65 +318,72 @@
 
             if (unsubscribeMessages) unsubscribeMessages();
 
-            const q = query(collection(db, "chats"), orderBy("timestamp", "asc"));
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+            // Fetch all chats and filter client-side to avoid Firestore index requirements
+            unsubscribeMessages = onSnapshot(collection(db, "chats"), (snapshot) => {
                 let msgBox = document.getElementById('modal-chat-messages');
                 msgBox.innerHTML = '';
-                let count = 0;
+                let messages = [];
 
                 snapshot.forEach((docSnap) => {
                     let msg = docSnap.data();
                     if (msg.deviceId === deviceId) {
-                        count++;
-                        let isSenderAdmin = msg.sender === 'admin';
-                        let timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-
-                        if (msg.type === 'giftcard') {
-                            msgBox.innerHTML += `
-                                <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
-                                    <div class="max-w-[85%] bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-lg border border-indigo-500/30 text-xs space-y-2">
-                                        <div class="flex justify-between items-center border-b border-indigo-700/50 pb-2">
-                                            <span class="font-black text-amber-400 tracking-wider">🎁 AURA E-GIFT CARD</span>
-                                            <span class="text-sm font-black text-emerald-400">₹${msg.amount}</span>
-                                        </div>
-                                        <div class="bg-black/40 p-2.5 rounded-xl font-mono space-y-1">
-                                            <p class="text-[10px] text-slate-300">Card No: <span class="text-white font-bold">${msg.cardNo}</span></p>
-                                            <p class="text-[10px] text-slate-300">Password: <span class="text-amber-300 font-bold">${msg.password}</span></p>
-                                            <p class="text-[10px] text-slate-300">Validity: <span class="text-white font-bold">${msg.validity}</span></p>
-                                        </div>
-                                        <div class="flex justify-between items-center text-[9px] text-slate-400 pt-1">
-                                            <span>Redeemable in Aura Wallet</span>
-                                            <span>${timeStr}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (msg.image) {
-                            msgBox.innerHTML += `
-                                <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
-                                    <div class="max-w-[70%] p-2 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
-                                        <img src="${msg.image}" class="rounded-xl max-h-48 object-cover w-full">
-                                        ${msg.text ? `<p class="text-xs px-1 text-slate-800">${msg.text}</p>` : ''}
-                                        <span class="text-[9px] text-slate-400 block text-right px-1">${timeStr}</span>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            msgBox.innerHTML += `
-                                <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
-                                    <div class="max-w-[75%] p-3 rounded-2xl text-xs font-medium ${isSenderAdmin ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'}">
-                                        <p>${msg.text}</p>
-                                        <span class="text-[9px] opacity-70 block mt-1 text-right">${timeStr}</span>
-                                    </div>
-                                </div>
-                            `;
-                        }
+                        messages.push(msg);
                     }
                 });
 
-                if (count === 0) {
+                // Sort ascending by timestamp
+                messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                if (messages.length === 0) {
                     msgBox.innerHTML = `<p class="text-center text-slate-400 text-xs py-8">No messages yet. Send a gift card or reply below!</p>`;
+                    return;
                 }
+
+                messages.forEach(msg => {
+                    let isSenderAdmin = msg.sender === 'admin';
+                    let timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                    if (msg.type === 'giftcard') {
+                        msgBox.innerHTML += `
+                            <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
+                                <div class="max-w-[85%] bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-lg border border-indigo-500/30 text-xs space-y-2">
+                                    <div class="flex justify-between items-center border-b border-indigo-700/50 pb-2">
+                                        <span class="font-black text-amber-400 tracking-wider">🎁 AURA E-GIFT CARD</span>
+                                        <span class="text-sm font-black text-emerald-400">₹${msg.amount}</span>
+                                    </div>
+                                    <div class="bg-black/40 p-2.5 rounded-xl font-mono space-y-1">
+                                        <p class="text-[10px] text-slate-300">Card No: <span class="text-white font-bold">${msg.cardNo}</span></p>
+                                        <p class="text-[10px] text-slate-300">Password: <span class="text-amber-300 font-bold">${msg.password}</span></p>
+                                        <p class="text-[10px] text-slate-300">Validity: <span class="text-white font-bold">${msg.validity}</span></p>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[9px] text-slate-400 pt-1">
+                                        <span>Redeemable in Aura Wallet</span>
+                                        <span>${timeStr}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (msg.image) {
+                        msgBox.innerHTML += `
+                            <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
+                                <div class="max-w-[70%] p-2 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
+                                    <img src="${msg.image}" class="rounded-xl max-h-48 object-cover w-full">
+                                    ${msg.text ? `<p class="text-xs px-1 text-slate-800">${msg.text}</p>` : ''}
+                                    <span class="text-[9px] text-slate-400 block text-right px-1">${timeStr}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        msgBox.innerHTML += `
+                            <div class="flex ${isSenderAdmin ? 'justify-end' : 'justify-start'}">
+                                <div class="max-w-[75%] p-3 rounded-2xl text-xs font-medium ${isSenderAdmin ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'}">
+                                    <p>${msg.text}</p>
+                                    <span class="text-[9px] opacity-70 block mt-1 text-right">${timeStr}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
                 msgBox.scrollTop = msgBox.scrollHeight;
             });
         }
@@ -441,6 +445,7 @@
             document.getElementById('voucher-modal').classList.add('hidden');
         }
 
+        // Fixed Gift Card Generation & Validation Save
         window.generateAndSendGiftCard = async function() {
             let amount = parseFloat(document.getElementById('voucher-amount-input').value) || 500;
             let validity = document.getElementById('voucher-validity-input').value || '30 Days';
@@ -449,6 +454,17 @@
             let password = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(100 + Math.random() * 900);
 
             try {
+                // 1. Save gift card securely in 'giftCards' collection so customer store can validate it successfully
+                await setDoc(doc(db, "giftCards", cardNo), {
+                    cardNo: cardNo,
+                    password: password,
+                    amount: amount,
+                    validity: validity,
+                    isUsed: false,
+                    createdAt: Date.now()
+                });
+
+                // 2. Update user wallet if user document exists
                 let userDocId = activeChatUserDocId;
                 if (!userDocId && allUsersMap[activeChatDeviceId]) {
                     userDocId = allUsersMap[activeChatDeviceId].docId;
@@ -463,6 +479,7 @@
                     document.getElementById('modal-chat-phone').textContent = document.getElementById('modal-chat-phone').textContent.split('|')[0] + ' | Wallet: ₹' + newWalletBalance;
                 }
 
+                // 3. Send gift card message in chat
                 await addDoc(collection(db, "chats"), {
                     deviceId: activeChatDeviceId,
                     sender: 'admin',
@@ -474,7 +491,7 @@
                     timestamp: Date.now()
                 });
 
-                alert(`Gift Card of ₹${amount} successfully sent! 🎉`);
+                alert(`Gift Card of ₹${amount} successfully sent & registered! 🎉`);
                 closeVoucherModal();
             } catch (err) {
                 alert('Error sending gift card: ' + err.message);

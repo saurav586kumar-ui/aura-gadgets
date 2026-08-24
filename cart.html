@@ -111,7 +111,7 @@
         </div>
     </main>
 
-    <!-- CHECKOUT MODAL (Address & Payment Selection) -->
+    <!-- CHECKOUT MODAL -->
     <div id="checkout-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="unshaped-card max-w-xl w-full p-6 md:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
             <button id="close-modal-btn" class="absolute top-6 right-6 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-pink-100 hover:text-pink-600 transition font-bold">✕</button>
@@ -173,7 +173,7 @@
     <!-- Firebase SDK & Cart Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
@@ -205,21 +205,37 @@
 
         async function fetchUserWallet() {
             let deviceId = localStorage.getItem('aura_device_id');
-            if (!deviceId) return;
+            if (!deviceId) {
+                deviceId = 'dev_' + Math.random().toString(36).substring(2, 9);
+                localStorage.setItem('aura_device_id', deviceId);
+            }
 
             try {
                 const q = query(collection(db, "users"), where("deviceId", "==", deviceId));
                 const querySnapshot = await getDocs(q);
+                
                 if (!querySnapshot.empty) {
                     let userDoc = querySnapshot.docs[0];
                     userDocId = userDoc.id;
                     let userData = userDoc.data();
                     userWalletBalance = userData.walletBalance || 0;
+                } else {
+                    // Agar user document nahi hai toh naya create kar do zero balance ke sath
+                    let newDocRef = doc(collection(db, "users"));
+                    userDocId = newDocRef.id;
+                    await setDoc(newDocRef, {
+                        deviceId: deviceId,
+                        walletBalance: 0,
+                        createdAt: Date.now()
+                    });
+                    userWalletBalance = 0;
+                }
 
-                    document.getElementById('wallet-balance-display').textContent = '₹' + userWalletBalance.toLocaleString();
-                    if (userWalletBalance > 0) {
-                        document.getElementById('wallet-checkbox-wrapper').classList.remove('hidden');
-                    }
+                document.getElementById('wallet-balance-display').textContent = '₹' + userWalletBalance.toLocaleString();
+                if (userWalletBalance > 0) {
+                    document.getElementById('wallet-checkbox-wrapper').classList.remove('hidden');
+                } else {
+                    document.getElementById('wallet-checkbox-wrapper').classList.add('hidden');
                 }
             } catch (err) {
                 console.error("Error fetching wallet:", err);
@@ -419,12 +435,8 @@
             let totalAmount = document.getElementById('summary-total').textContent;
 
             let deviceId = localStorage.getItem('aura_device_id');
-            if (!deviceId) {
-                deviceId = 'dev_' + Math.random().toString(36).substring(2, 9);
-                localStorage.setItem('aura_device_id', deviceId);
-            }
 
-            // Calculate wallet deducted amount for saving
+            // Calculate wallet deducted amount
             let cartSubtotal = cart.reduce((acc, item) => {
                 let p = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
                 return acc + (p * (item.quantity || 1));
@@ -456,7 +468,7 @@
                 // Save order
                 await addDoc(collection(db, "orders"), orderData);
 
-                // If wallet was used, deduct from user's Firebase wallet balance
+                // Deduct balance from Firebase users document
                 if (walletDeducted > 0 && userDocId) {
                     let newBalance = userWalletBalance - walletDeducted;
                     await updateDoc(doc(db, "users", userDocId), {

@@ -1,152 +1,523 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura - My Orders</title>
+    <title>My Profile, Wallet & Orders | AuraGadget</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --secondary: #ec4899; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #f0f4ff 0%, #fdf2f8 50%, #f5f3ff 100%); color: #1e293b; min-height: 100vh; }
+        h1, h2, h3, .font-brand { font-family: 'Outfit', sans-serif; }
+        .unshaped-card {
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.08);
+        }
+        .red-dot {
+            width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; display: inline-block; position: absolute; top: 10px; right: 12px;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); animation: pulse 2s infinite;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-800 p-4 sm:p-6">
+<body>
 
-    <div class="max-w-4xl mx-auto space-y-6">
-        <!-- Top Navigation -->
-        <div class="flex justify-between items-center bg-white px-6 py-4 rounded-2xl shadow-sm border">
-            <a href="index.html" class="font-black text-lg text-indigo-600">AURA GADGETS</a>
-            <div class="flex gap-3">
-                <a href="cart.html" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl">🛒 Cart</a>
-                <a href="index.html" class="px-4 py-2 bg-gray-100 text-gray-700 font-bold text-xs rounded-xl">🏠 Home</a>
+    <!-- Header -->
+    <header class="py-4 px-6 md:px-12 bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-indigo-100 flex items-center justify-between shadow-sm">
+        <a href="index.html" class="text-2xl font-black tracking-tight font-brand flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 animate-pulse"></span>
+            AURA<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600">GADGET</span>
+        </a>
+        <div class="flex items-center gap-4">
+            <a href="cart.html" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-full hover:bg-indigo-100 transition shadow-sm">🛒 Cart</a>
+            <a href="index.html" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-full hover:bg-pink-100 transition shadow-sm">🏠 Home</a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1 space-y-3">
+            <div class="unshaped-card p-4 space-y-2">
+                <button onclick="switchTab('profile')" id="btn-profile" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md">👤 Personal Profile</button>
+                <button onclick="switchTab('wallet')" id="btn-wallet" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative">💰 Gift Card & Wallet</button>
+                <button onclick="switchTab('addresses')" id="btn-addresses" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">📍 My Addresses</button>
+                <button onclick="switchTab('orders')" id="btn-orders" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative">📦 My Orders & Returns <span id="orders-red-dot" class="hidden"></span></button>
+                <button onclick="switchTab('notifications')" id="btn-notifications" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative">🔔 Notification History</button>
+                <button onclick="switchTab('about')" id="btn-about" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">ℹ️ About Us</button>
+                <button onclick="switchTab('contact')" id="btn-contact" class="w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition">✉️ Contact Us</button>
             </div>
         </div>
 
-        <!-- Orders Section -->
-        <div class="bg-white p-6 rounded-3xl shadow-sm border space-y-4">
-            <div class="flex justify-between items-center border-b pb-4">
-                <div>
-                    <h2 class="font-extrabold text-lg text-gray-900">My Orders History</h2>
-                    <p class="text-xs text-gray-500">All your placed orders will appear here instantly.</p>
+        <!-- Content Area -->
+        <div class="lg:col-span-3 space-y-6">
+
+            <!-- 1. Profile Section -->
+            <div id="section-profile" class="unshaped-card p-6 md:p-8">
+                <h2 class="text-2xl font-black font-brand text-gray-900 mb-2">Personal Details</h2>
+                <p class="text-xs text-gray-500 mb-6">Manage your personal identification for seamless checkout.</p>
+                <form id="profile-form" onsubmit="saveProfile(event)" class="space-y-4 max-w-xl">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Full Name</label>
+                        <input type="text" id="prof-name" required class="w-full px-4 py-3 rounded-xl border border-indigo-100 bg-white/50 focus:outline-none focus:border-indigo-500 text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Mobile Number</label>
+                        <input type="tel" id="prof-phone" required class="w-full px-4 py-3 rounded-xl border border-indigo-100 bg-white/50 focus:outline-none focus:border-indigo-500 text-sm font-semibold">
+                    </div>
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-200 hover:opacity-95 transition">Save Profile 💾</button>
+                </form>
+            </div>
+
+            <!-- 2. Wallet & Gift Card Section -->
+            <div id="section-wallet" class="unshaped-card p-6 md:p-8 hidden space-y-6">
+                <div class="flex justify-between items-center p-6 bg-gradient-to-r from-indigo-600 to-pink-600 rounded-3xl text-white shadow-xl">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-widest text-indigo-100">Store Account Balance</p>
+                        <h3 id="wallet-balance-display" class="text-3xl font-black font-brand mt-1">₹0.00</h3>
+                    </div>
+                    <span class="text-3xl">🎁</span>
                 </div>
-                <button onclick="loadOrdersDirectly()" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow">🔄 Refresh Orders</button>
+
+                <div class="p-6 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-4">
+                    <h3 class="font-black text-sm text-indigo-900">Redeem Gift Card / Voucher</h3>
+                    <p class="text-xs text-gray-500">Enter your gift card code and secret password provided by admin to add money to your store account.</p>
+                    <form onsubmit="redeemGiftCard(event)" class="space-y-3 max-w-lg">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Gift Card Code</label>
+                            <input type="text" id="gc-code-input" placeholder="e.g. GC-9821-XYZ" required class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white font-mono uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Secret Password</label>
+                            <input type="password" id="gc-pass-input" placeholder="Enter card password" required class="w-full px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow transition">Redeem Money 💰</button>
+                    </form>
+                </div>
             </div>
 
-            <!-- Orders Container -->
-            <div id="orders-list-container" class="space-y-4">
-                <p class="text-xs text-gray-400 text-center py-6">Loading orders...</p>
+            <!-- 3. Addresses Section -->
+            <div id="section-addresses" class="unshaped-card p-6 md:p-8 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black font-brand text-gray-900">Delivery Addresses</h2>
+                        <p class="text-xs text-gray-500">Save multiple addresses for quick order checkout.</p>
+                    </div>
+                    <button onclick="toggleAddressForm()" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow">+ Add New Address</button>
+                </div>
+
+                <div id="new-address-box" class="hidden mb-6 p-5 bg-indigo-50/60 rounded-2xl border border-indigo-100">
+                    <h3 class="font-black text-sm text-indigo-900 mb-4">Add New Delivery Location</h3>
+                    <form onsubmit="saveNewAddress(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="addr-name" placeholder="Contact Person Name" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="tel" id="addr-phone" placeholder="Mobile Number" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-street" placeholder="House No / Street Name" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-locality" placeholder="Locality / Landmark" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-city" placeholder="City" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <input type="text" id="addr-pin" placeholder="PIN Code" required class="px-4 py-2.5 rounded-xl border border-indigo-200 text-xs bg-white">
+                        <div class="col-span-full flex gap-3">
+                            <button type="submit" class="px-5 py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">Save Address</button>
+                            <button type="button" onclick="toggleAddressForm()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold text-xs rounded-xl">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="addresses-list" class="space-y-4"></div>
             </div>
+
+            <!-- 4. Orders Section -->
+            <div id="section-orders" class="unshaped-card p-6 md:p-8 hidden">
+                <h2 class="text-2xl font-black font-brand text-gray-900 mb-2">My Orders & History</h2>
+                <p class="text-xs text-gray-500 mb-6">Track live status, chat directly with admin, or check return requests.</p>
+                <div id="orders-container" class="space-y-6"></div>
+            </div>
+
+            <!-- 5. Notification History Section -->
+            <div id="section-notifications" class="unshaped-card p-6 md:p-8 hidden space-y-4">
+                <h2 class="text-2xl font-black font-brand text-gray-900">Notification History</h2>
+                <p class="text-xs text-gray-500">All recent updates, admin replies, money additions, and order alerts.</p>
+                <div id="notifications-list" class="space-y-3">
+                    <p class="text-xs text-gray-400">Loading notifications...</p>
+                </div>
+            </div>
+
+            <!-- 6. About Section -->
+            <div id="section-about" class="unshaped-card p-6 md:p-8 hidden space-y-4">
+                <h2 class="text-2xl font-black font-brand text-gray-900">About AuraGadget</h2>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    Welcome to <strong class="text-indigo-600">AuraGadget</strong> – your premier online gadget store for next-generation audio devices, smart wearables, and cutting-edge tech accessories.
+                </p>
+            </div>
+
+            <!-- 7. Contact Section -->
+            <div id="section-contact" class="unshaped-card p-6 md:p-8 hidden space-y-4 text-center">
+                <h2 class="text-2xl font-black font-brand text-gray-900">Get in Touch</h2>
+                <p class="text-xs text-gray-500 max-w-md mx-auto">Have questions about your gadget order or shipping? Reach out to us directly!</p>
+                <div class="py-6 space-y-3">
+                    <a href="mailto:sumitiitan58@gmail.com" class="inline-block px-8 py-4 bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-black text-xs uppercase tracking-widest rounded-full shadow-lg shadow-indigo-200 hover:scale-105 transition">
+                        ✉️ Email Us at sumitiitan58@gmail.com
+                    </a>
+                </div>
+            </div>
+
         </div>
-    </div>
+    </main>
 
     <!-- Return Modal -->
-    <div id="return-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white p-6 rounded-3xl max-w-md w-full space-y-4 text-xs">
-            <h3 class="font-extrabold text-sm">Request Product Return / Refund</h3>
+    <div id="return-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-indigo-100">
+            <h3 class="font-black text-lg text-gray-900 font-brand">Request Product Return</h3>
+            <p class="text-xs text-gray-500">Please provide a valid reason for returning this item.</p>
             <input type="hidden" id="return-order-id">
-            <textarea id="return-reason" placeholder="Enter reason for return..." class="w-full p-3 border rounded-xl h-24"></textarea>
-            <div class="flex justify-end gap-2">
-                <button onclick="closeReturnModal()" class="px-4 py-2 bg-gray-200 font-bold rounded-xl">Cancel</button>
-                <button onclick="submitReturn()" class="px-4 py-2 bg-pink-600 text-white font-bold rounded-xl">Submit</button>
+            <textarea id="return-reason" placeholder="Enter reason..." rows="4" class="w-full p-3 rounded-xl border border-indigo-200 text-xs focus:outline-none focus:border-indigo-500"></textarea>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeReturnModal()" class="px-4 py-2 bg-gray-200 font-bold text-xs rounded-xl">Cancel</button>
+                <button onclick="submitReturnRequest()" class="px-4 py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">Submit Request</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // 1. Agar localStorage bilkul khali ho toh ek sample order automatically inject kar do taaki screen khali na dikhe
-        function ensureInitialOrder() {
-            let existing = localStorage.getItem('aura_customer_orders') || localStorage.getItem('aura_orders');
-            if (!existing) {
-                let sampleOrders = [
-                    {
-                        id: "AURA-" + Math.floor(10000 + Math.random() * 90000),
-                        itemsSummary: "Wireless Bluetooth Earbuds (x1)",
-                        total: "799",
-                        status: "Pending",
-                        shippingAddress: "Kaji Dumra, Bihar",
-                        customerName: "Sumit",
-                        customerPhone: "08002727626"
-                    }
-                ];
-                localStorage.setItem('aura_customer_orders', JSON.stringify(sampleOrders));
+    <!-- LIVE CHAT MODAL -->
+    <div id="chat-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-indigo-100 w-full max-w-lg rounded-3xl shadow-2xl flex flex-col h-[550px] overflow-hidden">
+            <!-- Chat Header -->
+            <div class="p-4 bg-gradient-to-r from-indigo-600 to-pink-600 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="chat-modal-title" class="font-black text-sm">Admin Support Chat</h3>
+                    <p id="chat-modal-subtitle" class="text-[10px] text-indigo-100">Direct 1-to-1 Conversation</p>
+                </div>
+                <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 text-white font-bold flex items-center justify-center text-xs transition">✕</button>
+            </div>
+
+            <!-- Messages Box -->
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs">
+                <div class="text-center text-gray-400 text-[11px] py-10">Loading messages...</div>
+            </div>
+
+            <!-- Image Preview Area -->
+            <div id="image-preview-box" class="hidden px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex items-center justify-between">
+                <span id="preview-file-name" class="text-[11px] text-indigo-700 font-bold truncate max-w-[200px]">Image selected</span>
+                <button onclick="clearImageSelection()" class="text-red-500 font-bold text-xs">Remove ✕</button>
+            </div>
+
+            <!-- Chat Input Footer -->
+            <div class="p-3 bg-white border-t border-gray-100 flex items-center gap-2">
+                <label class="cursor-pointer p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition flex items-center justify-center" title="Attach Image">
+                    📷
+                    <input type="file" id="chat-image-input" accept="image/*" class="hidden" onchange="handleImageSelection(event)">
+                </label>
+                <input 
+                    type="text" 
+                    id="chat-input-msg" 
+                    placeholder="Type your difficulty/message..." 
+                    onkeypress="if(event.key === 'Enter') sendChatMessage()"
+                    class="flex-1 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500"
+                >
+                <button onclick="sendChatMessage()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition">Send</button>
+            </div>
+            <div class="px-4 py-2 bg-gray-50 text-[10px] text-center text-gray-500 border-t">
+                Prefer email? You can also write directly to <a href="mailto:sumitiitan58@gmail.com" class="text-indigo-600 font-bold underline">sumitiitan58@gmail.com</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Script Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc, addDoc, orderBy, onSnapshot, serverTimestamp, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBW-jJt5BzRPldFaazaAausuxZGHuVtoNw",
+            authDomain: "auragadgets-c3a7c.firebaseapp.com",
+            projectId: "auragadgets-c3a7c",
+            storageBucket: "auragadgets-c3a7c.firebasestorage.app",
+            messagingSenderId: "119527057995",
+            appId: "1:119527057995:web:5f3b2173af91861d1cbbce",
+            measurementId: "G-54CD81QGGR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let activeChatOrderId = null;
+        let activeChatUnsubscribe = null;
+        let selectedImageBase64 = null;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadUserProfile();
+            loadUserAddresses();
+            loadUserOrders();
+            loadUserWallet();
+            loadNotificationHistory();
+        });
+
+        window.switchTab = function(tabName) {
+            ['profile', 'wallet', 'addresses', 'orders', 'notifications', 'about', 'contact'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                let btn = document.getElementById(`btn-${t}`);
+                if (btn) btn.className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm text-gray-700 hover:bg-indigo-50 transition relative";
+            });
+            document.getElementById(`section-${tabName}`).classList.remove('hidden');
+            let activeBtn = document.getElementById(`btn-${tabName}`);
+            if (activeBtn) activeBtn.className = "w-full text-left px-4 py-3 rounded-2xl font-bold text-sm bg-indigo-600 text-white transition shadow-md relative";
+            
+            if (tabName === 'orders') {
+                localStorage.setItem('aura_orders_viewed', 'true');
+                document.getElementById('orders-red-dot').innerHTML = '';
             }
         }
 
-        // 2. Direct & Bulletproof Order Loader Function
-        window.loadOrdersDirectly = function() {
-            ensureInitialOrder();
-            let container = document.getElementById('orders-list-container');
-            container.innerHTML = '';
+        window.saveProfile = function(e) {
+            e.preventDefault();
+            let profile = {
+                name: document.getElementById('prof-name').value,
+                phone: document.getElementById('prof-phone').value
+            };
+            localStorage.setItem('aura_user_profile', JSON.stringify(profile));
+            alert('Profile saved successfully! 💾');
+        }
 
-            // Sabhi possible storage keys check karo jahan order save ho sakta hai
-            let rawData = localStorage.getItem('aura_customer_orders') || 
-                          localStorage.getItem('aura_orders') || 
-                          localStorage.getItem('aura_recent_order') || 
-                          localStorage.getItem('recentOrder');
-
-            let orders = [];
-            if (rawData) {
-                try {
-                    let parsed = JSON.parse(rawData);
-                    if (Array.isArray(parsed)) {
-                        orders = parsed;
-                    } else if (typeof parsed === 'object' && parsed !== null) {
-                        orders = [parsed];
-                    }
-                } catch(e) {
-                    console.log("Parsing error", e);
-                }
+        function loadUserProfile() {
+            let saved = JSON.parse(localStorage.getItem('aura_user_profile'));
+            if (saved) {
+                document.getElementById('prof-name').value = saved.name || '';
+                document.getElementById('prof-phone').value = saved.phone || '';
             }
+        }
 
-            if (orders.length === 0) {
-                container.innerHTML = `<div class="p-6 text-center text-gray-400 bg-gray-50 rounded-2xl border">No orders found. Place an order from the cart!</div>`;
+        // Wallet Balance Management
+        function loadUserWallet() {
+            let balance = parseFloat(localStorage.getItem('aura_store_wallet')) || 0.00;
+            document.getElementById('wallet-balance-display').textContent = `₹${balance.toFixed(2)}`;
+        }
+
+        window.redeemGiftCard = async function(e) {
+            e.preventDefault();
+            let code = document.getElementById('gc-code-input').value.trim().toUpperCase();
+            let pass = document.getElementById('gc-pass-input').value.trim();
+
+            try {
+                const docRef = doc(db, "giftcards", code);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    alert('Invalid Gift Card code!');
+                    return;
+                }
+
+                let gcData = docSnap.data();
+                if (gcData.password !== pass) {
+                    alert('Incorrect secret password for this gift card!');
+                    return;
+                }
+
+                if (gcData.status === 'Used') {
+                    alert('This gift card has already been redeemed!');
+                    return;
+                }
+
+                if (gcData.status === 'Expired') {
+                    alert('This gift card is expired!');
+                    return;
+                }
+
+                // Check expiry date if available
+                if (gcData.expiryDate && new Date(gcData.expiryDate) < new Date()) {
+                    await updateDoc(docRef, { status: 'Expired' });
+                    alert('This gift card has expired!');
+                    return;
+                }
+
+                let amount = parseFloat(gcData.amount) || 0;
+
+                // Mark as used
+                await updateDoc(docRef, { status: 'Used', redeemedBy: localStorage.getItem('aura_device_id') || 'Customer' });
+
+                // Add to wallet
+                let currentWallet = parseFloat(localStorage.getItem('aura_store_wallet')) || 0;
+                let newWallet = currentWallet + amount;
+                localStorage.setItem('aura_store_wallet', newWallet);
+                loadUserWallet();
+
+                // Add notification history
+                addNotificationLog(`Successfully redeemed Gift Card ${code} for ₹${amount}. Added to your store balance.`);
+
+                alert(`Success! ₹${amount} added to your wallet. Current balance: ₹${newWallet.toFixed(2)} 🎁`);
+                document.getElementById('gc-code-input').value = '';
+                document.getElementById('gc-pass-input').value = '';
+            } catch (err) {
+                alert('Error redeeming gift card: ' + err.message);
+            }
+        }
+
+        function addNotificationLog(text) {
+            let logs = JSON.parse(localStorage.getItem('aura_notifications')) || [];
+            logs.unshift({ text: text, time: new Date().toLocaleString() });
+            localStorage.setItem('aura_notifications', JSON.stringify(logs));
+            loadNotificationHistory();
+        }
+
+        function loadNotificationHistory() {
+            let logs = JSON.parse(localStorage.getItem('aura_notifications')) || [];
+            let container = document.getElementById('notifications-list');
+            container.innerHTML = '';
+            if (logs.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">No notifications yet.</p>`;
                 return;
             }
-
-            // Har order ko render karo
-            orders.forEach((order, index) => {
-                if (!order.id) order.id = "AURA-" + Math.floor(10000 + Math.random() * 90000);
-                if (!order.status) order.status = "Pending";
-
-                let statusColor = "bg-amber-100 text-amber-800"; // Pending default
-                let s = order.status.toLowerCase();
-                if (s.includes('confirm')) statusColor = "bg-blue-100 text-blue-800";
-                else if (s.includes('dispatch')) statusColor = "bg-purple-100 text-purple-800";
-                else if (s.includes('out')) statusColor = "bg-indigo-100 text-indigo-800";
-                else if (s.includes('deliver')) statusColor = "bg-green-100 text-green-800";
-                else if (s.includes('cancel')) statusColor = "bg-red-100 text-red-800";
-                else if (s.includes('return')) statusColor = "bg-pink-100 text-pink-800";
-
-                let returnSection = "";
-                if (order.returnStatus) {
-                    let rColor = order.returnStatus === 'Accepted' ? 'bg-emerald-100 text-emerald-800' : (order.returnStatus === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
-                    returnSection = `<div class="mt-2 p-2.5 bg-gray-50 rounded-xl border flex justify-between items-center text-xs">
-                        <span class="font-bold text-gray-600">Return Request:</span>
-                        <span class="px-2.5 py-1 ${rColor} font-black rounded uppercase text-[10px]">${order.returnStatus}</span>
-                    </div>`;
-                }
-
+            logs.forEach(log => {
                 container.innerHTML += `
-                    <div class="p-5 rounded-2xl border bg-white shadow-sm space-y-3 text-xs">
-                        <div class="flex justify-between items-center border-b pb-3">
-                            <div>
-                                <span class="font-extrabold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full">ID: ${order.id}</span>
-                                <p class="text-gray-400 mt-1">Customer: ${order.customerName || 'Sumit'} (${order.customerPhone || '08002727626'})</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="px-3 py-1 ${statusColor} font-black rounded-full uppercase">${order.status}</span>
-                                <p class="font-bold text-gray-900 mt-1">₹${order.total || order.amount || '0'}</p>
-                            </div>
-                        </div>
-                        <div class="text-gray-600 space-y-1">
-                            <p><strong>Items:</strong> ${order.itemsSummary || order.itemSummary || order.items || 'Gadget Item'}</p>
-                            <p class="text-gray-500">📍 <strong>Address:</strong> ${order.shippingAddress || 'Kaji Dumra, Bihar'}</p>
-                        </div>
-                        ${returnSection}
-                        <div class="flex gap-2 pt-2">
-                            ${order.status.toLowerCase() === 'delivered' && !order.returnStatus ? 
-                                `<button onclick="openReturnModal('${order.id}')" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold rounded-xl">🔄 Request Return / Refund</button>` 
-                                : ''}
-                        </div>
+                    <div class="p-3 bg-white/70 border border-indigo-100 rounded-xl flex justify-between items-center text-xs">
+                        <span class="text-gray-800 font-medium">${log.text}</span>
+                        <span class="text-[10px] text-gray-400 ml-2">${log.time}</span>
                     </div>
                 `;
             });
+        }
+
+        window.toggleAddressForm = function() {
+            document.getElementById('new-address-box').classList.toggle('hidden');
+        }
+
+        window.saveNewAddress = function(e) {
+            e.preventDefault();
+            let newAddr = {
+                name: document.getElementById('addr-name').value,
+                phone: document.getElementById('addr-phone').value,
+                street: document.getElementById('addr-street').value,
+                locality: document.getElementById('addr-locality').value,
+                city: document.getElementById('addr-city').value,
+                pin: document.getElementById('addr-pin').value
+            };
+            let addresses = JSON.parse(localStorage.getItem('aura_user_addresses')) || [];
+            addresses.push(newAddr);
+            localStorage.setItem('aura_user_addresses', JSON.stringify(addresses));
+            toggleAddressForm();
+            loadUserAddresses();
+            alert('Address added successfully! 📍');
+        }
+
+        function loadUserAddresses() {
+            let addresses = JSON.parse(localStorage.getItem('aura_user_addresses')) || [];
+            let container = document.getElementById('addresses-list');
+            container.innerHTML = '';
+            if (addresses.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">No saved addresses found. Add one above.</p>`;
+                return;
+            }
+            addresses.forEach((addr, idx) => {
+                container.innerHTML += `
+                    <div class="p-4 rounded-2xl border border-indigo-100 bg-white/60 flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900">${addr.name} (${addr.phone})</h4>
+                            <p class="text-xs text-gray-600 mt-1">${addr.street}, ${addr.locality}, ${addr.city} - ${addr.pin}</p>
+                        </div>
+                        <button onclick="deleteAddress(${idx})" class="text-red-500 font-bold text-xs hover:underline">Delete</button>
+                    </div>
+                `;
+            });
+        }
+
+        window.deleteAddress = function(idx) {
+            let addresses = JSON.parse(localStorage.getItem('aura_user_addresses')) || [];
+            addresses.splice(idx, 1);
+            localStorage.setItem('aura_user_addresses', JSON.stringify(addresses));
+            loadUserAddresses();
+        }
+
+        async function loadUserOrders() {
+            let container = document.getElementById('orders-container');
+            container.innerHTML = `<p class="text-xs text-gray-400">Loading your device orders...</p>`;
+            
+            let deviceId = localStorage.getItem('aura_device_id');
+            let orders = [];
+
+            try {
+                if (deviceId) {
+                    try {
+                        const q = query(collection(db, "orders"), where("deviceId", "==", deviceId));
+                        const querySnapshot = await getDocs(q);
+                        querySnapshot.forEach((docSnap) => {
+                            orders.push({ id: docSnap.id, ...docSnap.data() });
+                        });
+                    } catch (indexErr) {
+                        console.warn("Query fallback triggered:", indexErr);
+                    }
+                }
+
+                if (orders.length === 0) {
+                    const allSnapshot = await getDocs(collection(db, "orders"));
+                    allSnapshot.forEach((docSnap) => {
+                        let data = docSnap.data();
+                        let userProf = JSON.parse(localStorage.getItem('aura_user_profile')) || {};
+                        if ((deviceId && data.deviceId === deviceId) || (userProf.phone && data.customerPhone === userProf.phone)) {
+                            orders.push({ id: docSnap.id, ...data });
+                        }
+                    });
+                }
+
+                container.innerHTML = '';
+                if (orders.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">No orders found on this device. Start shopping!</p>`;
+                    return;
+                }
+
+                let hasNewUpdate = false;
+                orders.forEach(order => {
+                    let orderStatus = order.status || 'Pending';
+                    if (orderStatus !== 'Pending') hasNewUpdate = true;
+                    let statusBg = orderStatus === 'Delivered' ? 'bg-green-100 text-green-700' : (orderStatus === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-700');
+                    
+                    let returnSection = '';
+                    if (order.returnRequested) {
+                        let rStatus = order.returnStatus || 'Pending';
+                        returnSection = `
+                            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold text-amber-900">Return Request Raised:</span> <span class="text-gray-600">${order.returnReason}</span>
+                                </div>
+                                <span class="px-2.5 py-1 bg-amber-200 text-amber-900 font-extrabold rounded-lg uppercase text-[10px]">Status: ${rStatus}</span>
+                            </div>
+                        `;
+                    }
+
+                    container.innerHTML += `
+                        <div class="p-5 rounded-2xl border border-indigo-100 bg-white/70 space-y-3">
+                            <div class="flex justify-between items-center border-b border-indigo-50 pb-3">
+                                <div>
+                                    <span class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full uppercase">Order ID: ${order.id}</span>
+                                    <p class="text-[11px] text-gray-400 mt-1">Customer: ${order.customerName || 'N/A'} (${order.customerPhone || 'N/A'})</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-3 py-1 ${statusBg} font-black text-xs rounded-full uppercase">${orderStatus}</span>
+                                    <p class="text-xs font-bold text-gray-900 mt-1">Total: ${order.total || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-600">
+                                <p class="font-bold mb-1">Items / Details:</p>
+                                <p>${order.itemsSummary || 'Gadget Order'}</p>
+                                <p class="text-[11px] text-gray-500 mt-1">📍 Address: ${order.shippingAddress || 'N/A'}</p>
+                            </div>
+                            ${returnSection}
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button onclick="openChat('${order.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow relative">💬 Chat with Admin <span id="chat-dot-${order.id}"></span></button>
+                                <a href="mailto:sumitiitan58@gmail.com?subject=Support regarding Order ${order.id}&body=Hi Admin, I am facing an issue with Order ID: ${order.id}" class="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition">✉️ Email Admin</a>
+                                ${!order.returnRequested ? `<button onclick="openReturnModal('${order.id}')" class="px-4 py-2 bg-pink-50 border border-pink-200 text-pink-700 font-bold text-xs rounded-xl hover:bg-pink-100 transition">🔄 Request Return</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if (hasNewUpdate && localStorage.getItem('aura_orders_viewed') !== 'true') {
+                    document.getElementById('orders-red-dot').className = "red-dot";
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p class="text-xs text-red-400">Error loading orders: ${err.message}</p>`;
+            }
         }
 
         window.openReturnModal = function(orderId) {
@@ -159,29 +530,126 @@
             document.getElementById('return-modal').classList.add('hidden');
         }
 
-        window.submitReturn = function() {
-            let orderId = document.getElementById('return-order-id').value;
-            let reason = document.getElementById('return-reason').value.trim();
-            if (!reason) { alert('Please enter a reason.'); return; }
-
-            let rawData = localStorage.getItem('aura_customer_orders');
-            if (rawData) {
-                let orders = JSON.parse(rawData);
-                orders.forEach(o => {
-                    if (o.id === orderId) {
-                        o.returnStatus = 'Pending';
-                        o.returnReason = reason;
-                    }
-                });
-                localStorage.setItem('aura_customer_orders', JSON.stringify(orders));
+        window.submitReturnRequest = async function() {
+            let orderIdInput = document.getElementById('return-order-id').value;
+            let reason = document.getElementById('return-reason').value;
+            if (!reason) {
+                alert('Please enter a return reason.');
+                return;
             }
-            closeReturnModal();
-            alert('Return request submitted successfully! Status is Pending.');
-            loadOrdersDirectly();
+            try {
+                await updateDoc(doc(db, "orders", orderIdInput), {
+                    returnRequested: true,
+                    returnReason: reason,
+                    returnStatus: 'Pending'
+                });
+                alert('Return request submitted successfully! 🔄');
+                closeReturnModal();
+                loadUserOrders();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
         }
 
-        // Page load hote hi turant load ho jayega
-        window.addEventListener('DOMContentLoaded', loadOrdersDirectly);
+        window.openChat = function(orderId) {
+            activeChatOrderId = orderId;
+            document.getElementById('chat-modal-title').textContent = `Admin Support Chat`;
+            document.getElementById('chat-modal-subtitle').textContent = `Order ID: ${orderId}`;
+            document.getElementById('chat-modal').classList.remove('hidden');
+            loadChatMessages(orderId);
+        }
+
+        window.closeChatModal = function() {
+            document.getElementById('chat-modal').classList.add('hidden');
+            if (activeChatUnsubscribe) {
+                activeChatUnsubscribe();
+                activeChatUnsubscribe = null;
+            }
+            activeChatOrderId = null;
+            clearImageSelection();
+        }
+
+        function loadChatMessages(orderId) {
+            let container = document.getElementById('chat-messages-container');
+            container.innerHTML = `<div class="text-center text-gray-400 py-4">Connecting to secure chat...</div>`;
+
+            const msgsRef = collection(db, "orders", orderId, "messages");
+            const q = query(msgsRef, orderBy("timestamp", "asc"));
+
+            if (activeChatUnsubscribe) activeChatUnsubscribe();
+
+            activeChatUnsubscribe = onSnapshot(q, (snapshot) => {
+                container.innerHTML = '';
+                if (snapshot.empty) {
+                    container.innerHTML = `<p class="text-center text-gray-400 text-[11px] py-10">No messages yet. Send your difficulty/message to admin!</p>`;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    let msg = docSnap.data();
+                    let isUser = msg.sender !== 'admin';
+                    let bubbleAlign = isUser ? 'ml-auto bg-indigo-600 text-white' : 'mr-auto bg-white text-slate-800 border border-slate-200';
+                    let imageHtml = msg.imageUrl ? `<img src="${msg.imageUrl}" class="w-40 h-40 object-cover rounded-lg mt-2 cursor-pointer" onclick="window.open('${msg.imageUrl}')">` : '';
+
+                    container.innerHTML += `
+                        <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[80%] ${isUser ? 'ml-auto' : 'mr-auto'}">
+                            <span class="text-[9px] text-gray-400 mb-0.5">${isUser ? 'You' : 'Admin'}</span>
+                            <div class="p-3 rounded-2xl text-xs shadow-sm ${bubbleAlign}">
+                                ${msg.text ? `<p class="leading-relaxed">${msg.text}</p>` : ''}
+                                ${imageHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        window.handleImageSelection = function(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result;
+                document.getElementById('preview-file-name').textContent = file.name;
+                document.getElementById('image-preview-box').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.clearImageSelection = function() {
+            selectedImageBase64 = null;
+            document.getElementById('chat-image-input').value = '';
+            document.getElementById('image-preview-box').classList.add('hidden');
+        }
+
+        window.sendChatMessage = async function() {
+            let inputField = document.getElementById('chat-input-msg');
+            let text = inputField.value.trim();
+
+            if (!text && !selectedImageBase64) return;
+            if (!activeChatOrderId) return;
+
+            let msgData = {
+                text: text,
+                sender: 'customer',
+                timestamp: serverTimestamp()
+            };
+
+            if (selectedImageBase64) {
+                msgData.imageUrl = selectedImageBase64;
+            }
+
+            try {
+                inputField.value = '';
+                clearImageSelection();
+                await addDoc(collection(db, "orders", activeChatOrderId, "messages"), msgData);
+                addNotificationLog(`Sent message to admin for Order #${activeChatOrderId}`);
+            } catch (err) {
+                alert('Failed to send message: ' + err.message);
+            }
+        }
     </script>
 </body>
 </html>
